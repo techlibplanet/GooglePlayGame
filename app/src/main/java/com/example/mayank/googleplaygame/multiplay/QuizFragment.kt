@@ -15,7 +15,7 @@ import com.example.mayank.googleplaygame.R
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val AMOUNT = "Amount"
 private const val SUBJECT_CODE = "SubjectCode"
-private const val SUBJECT = "SUBJECT"
+private const val SUBJECT = "Subject"
 
 /**
  * A simple [Fragment] subclass.

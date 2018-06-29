@@ -293,18 +293,22 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                         amount = amountList[l]
                         textViewAmount.text = amount
                     }
+                    resetCountdownTimer(10000,1000)
                 }else if(state == 'S'){
                     if (value == 0){
                         i++
                         j=i
                         subject = subjectList[i]
+                        subCode = subjectCode[i]
                         textViewSubject.text = subject
                     }else if(value == 1){
                         j--
                         i=j
                         subject = subjectList[j]
+                        subCode = subjectCode[j]
                         textViewSubject.text = subject
                     }
+                    resetCountdownTimer(10000,1000)
                 }
             }
         }

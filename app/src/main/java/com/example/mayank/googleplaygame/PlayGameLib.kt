@@ -294,6 +294,9 @@ class PlayGameLib(private val activity : Activity) {
             GameConstants.mRoomId = null
             GameConstants.mRoomConfig = null
             showGameError()
+
+            val gameMenuFragment = GameMenuFragment()
+            switchToFragment(gameMenuFragment)
         }
 
 
