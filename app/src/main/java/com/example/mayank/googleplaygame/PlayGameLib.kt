@@ -252,10 +252,13 @@ class PlayGameLib(private val activity : Activity) {
 
         val state = buf[0].toChar()
         val value = buf[1].toInt()
-        if (state == 'Q'){
-            GameDetailFragment.newInstance(state.toString(), value.toString())
-        }
+        sendBroadcast(state, value)
 
+
+    }
+
+    private fun sendBroadcast(state: Char, value: Int){
+        activity.sendBroadcast(Intent(GameDetailFragment.ACTION_FINISHED_SYNC).putExtra("state", state).putExtra("value", value));
     }
 
     private var mPlayerId: String? = null

@@ -3,6 +3,7 @@ package com.example.mayank.googleplaygame.multiplay
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -70,6 +71,7 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
         subjectCode = resources.getStringArray(R.array.subject_code)
         amountList = resources.getStringArray(R.array.amount)
         playGameLib = PlayGameLib(activity!!)
+        context?.registerReceiver(messageBroadcastReceiver, syncIntentFilter);
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -137,7 +139,7 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                     subject = subjectList[j]
                     textViewSubject.text = subject
                 }
-                playGameLib?.broadcastMessage('Q',1)
+                playGameLib?.broadcastMessage('S',1)
                 resetCountdownTimer(10000,1000)
             }
 
@@ -155,7 +157,7 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                     textViewSubject.text = subject
                 }
                 resetCountdownTimer(10000,1000)
-                playGameLib?.broadcastMessage('Q',0)
+                playGameLib?.broadcastMessage('S',0)
             }
 
             R.id.leave_room_button ->{
@@ -265,13 +267,28 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
         const val ACTION_FINISHED_SYNC = "com.example.mayank.googleplaygame.ACTION_MESSAGE_RECEIVED"
     }
 
+    private val syncIntentFilter = IntentFilter(ACTION_FINISHED_SYNC)
 
-    private val syncBroadcastReceiver = object : BroadcastReceiver() {
+
+    private val messageBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (ACTION_FINISHED_SYNC == intent.action) {
                 val state = intent.getCharExtra("state", 'Z')
+                val value = intent.getIntExtra("value", -1)
+                logD(TAG, "State - $state")
+                logD(TAG, "Value - $value")
                 if (state == 'A'){
-                    
+                    if (value == 0){
+                        k++
+                        l=k
+                        amount = amountList[k]
+                        textViewAmount.text = amount
+                    }else if(value == 1){
+                        l--
+                        k=l
+                        amount = amountList[l]
+                        textViewAmount.text = amount
+                    }
                 }
 
             }
