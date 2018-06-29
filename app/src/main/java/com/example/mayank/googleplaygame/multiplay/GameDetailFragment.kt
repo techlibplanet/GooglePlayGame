@@ -197,6 +197,10 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
 //                val quizFragment = SinglePlayerQuizFragment()
 //                quizFragment.arguments = bundle
 //                playGameLib?.switchToFragment(quizFragment)
+                val quizFragment = QuizFragment()
+                quizFragment.arguments = bundle
+                playGameLib?.switchToFragment(quizFragment)
+                unRegisterBroadcastReceiver()
 
             }
         }
@@ -289,10 +293,25 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                         amount = amountList[l]
                         textViewAmount.text = amount
                     }
+                }else if(state == 'S'){
+                    if (value == 0){
+                        i++
+                        j=i
+                        subject = subjectList[i]
+                        textViewSubject.text = subject
+                    }else if(value == 1){
+                        j--
+                        i=j
+                        subject = subjectList[j]
+                        textViewSubject.text = subject
+                    }
                 }
-
             }
         }
+    }
+
+    private fun unRegisterBroadcastReceiver(){
+        context?.unregisterReceiver(messageBroadcastReceiver)
     }
 
 
