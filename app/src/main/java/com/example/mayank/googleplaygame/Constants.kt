@@ -14,4 +14,10 @@ object Constants {
     fun logE(tag: String, message: String){
         Log.d(tag, message)
     }
+
+    // Api
+    const val API_END_POINT = "http://www.alchemyeducation.org/"
+
+    const val CONNECTION_TIMEOUT: Long = 60
+    const val READ_TIMEOUT: Long = 60
 }

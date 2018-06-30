@@ -9,8 +9,10 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.WindowManager
 import com.example.mayank.googleplaygame.Constants.logD
+import com.example.mayank.googleplaygame.PlayGameLib.GameConstants.mResultBuf
 import com.example.mayank.googleplaygame.multiplay.GameDetailFragment
 import com.example.mayank.googleplaygame.multiplay.GameMenuFragment
+import com.example.mayank.googleplaygame.multiplay.MultiplayerResultFragment
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
@@ -20,6 +22,8 @@ import com.google.android.gms.games.multiplayer.Participant
 import com.google.android.gms.games.multiplayer.realtime.*
 import com.google.android.gms.tasks.OnFailureListener
 import java.util.ArrayList
+import java.util.HashMap
+import java.util.HashSet
 
 class PlayGameLib(private val activity : Activity) {
 
@@ -42,8 +46,17 @@ class PlayGameLib(private val activity : Activity) {
         val RC_WAITING_ROOM = 10002
         // Message buffer for sending messages
         var mMsgBuf = ByteArray(2)
+        var mResultBuf = ByteArray(5)
 
         var mRoom :Room? = null
+
+        var displayName : String? = null
+        // Score of other participants. We update this as we receive their scores
+        // from the network.
+        var mParticipantScore: MutableMap<String, Int> = HashMap()
+        // Participants who sent us their final score.
+        var mFinishedParticipants: MutableSet<String> = HashSet()
+        var mPlayerId: String? = null
     }
 
     private val TAG = PlayGameLib::class.java.simpleName
@@ -52,6 +65,10 @@ class PlayGameLib(private val activity : Activity) {
     init {
         GameConstants.mRealTimeMultiplayerClient = getRealTimeMultiPlayerClient()
         GameConstants.mPlayerClient = getPlayerClient()
+        GameConstants.displayName = getDisplayName()
+        GameConstants.mPlayerId = getPlayerId()
+        GameConstants.mMyId = getMyId()
+
     }
 
     fun getSignInAccount(): GoogleSignInAccount? {
@@ -66,8 +83,14 @@ class PlayGameLib(private val activity : Activity) {
         return Games.getPlayersClient(activity, getSignInAccount()!!)
     }
 
-    fun getPlayerId(){
-        GameConstants.mPlayerClient?.currentPlayer?.addOnSuccessListener { player -> mPlayerId = player.playerId  }
+    fun getPlayerId(): String? {
+        GameConstants.mPlayerClient?.currentPlayer?.addOnSuccessListener { player -> GameConstants.mPlayerId = player.playerId  }
+        return GameConstants.mPlayerId
+    }
+
+    fun getDisplayName(): String?{
+        GameConstants.mPlayerClient?.currentPlayer?.addOnSuccessListener { player -> GameConstants.displayName = player.displayName }
+        return GameConstants.displayName
     }
 
     fun getRoomId(): String? {
@@ -131,7 +154,6 @@ class PlayGameLib(private val activity : Activity) {
 //                showGameError()
                 // Get the player Id here
                 GameConstants.mRoom = room
-                GameConstants.mMyId = room?.getParticipantId(mPlayerId)
                 return
             }
 
@@ -248,20 +270,78 @@ class PlayGameLib(private val activity : Activity) {
         val buf = realTimeMessage.messageData
         val sender = realTimeMessage.senderParticipantId
         logD(TAG, "Sender : $sender")
-        Log.d(TAG, "Message received: " + buf[0].toChar() + "/" + buf[1].toInt())
+
 
         val state = buf[0].toChar()
-        val value = buf[1].toInt()
-        sendBroadcast(state, value)
+        val value1 = buf[1].toInt()
+        if (state == 'R'){
+            val value2 = buf[2].toInt()
+            val value3 = buf[1].toInt()
+            Log.d(TAG, "Message received: " + buf[0].toChar() + "/" + buf[1].toInt()+ "/" + buf[2].toInt()+ "/" + buf[3].toInt())
+            // score update.
+            val existingScore = if (GameConstants.mParticipantScore.containsKey(sender)) GameConstants.mParticipantScore[sender] else 0
+            val thisScore = value1
+            if (thisScore> existingScore!!){
+                GameConstants.mParticipantScore.put(sender, thisScore)
+            }
+            //sendBroadcastResult(state, value1, value2, value3)
+            //updateScore(sender, value1)
+
+//            updatePeerScores()
+        }
+
+        if (state == 'A' || state == 'S'){
+            Log.d(TAG, "Message received: " + buf[0].toChar() + "/" + buf[1].toInt())
+            sendBroadcastMessage(state, value1)
+        }
+
+
 
 
     }
 
-    private fun sendBroadcast(state: Char, value: Int){
-        activity.sendBroadcast(Intent(GameDetailFragment.ACTION_FINISHED_SYNC).putExtra("state", state).putExtra("value", value));
+    fun updateScore(sender: String, value1: Int) {
+        val existingScore = if (GameConstants.mParticipantScore.containsKey(sender)) GameConstants.mParticipantScore[sender] else 0
+        val thisScore = value1
+        if (thisScore> existingScore!!){
+            GameConstants.mParticipantScore.put(sender, thisScore)
+        }
     }
 
-    private var mPlayerId: String? = null
+
+    // formats a score as a three-digit number
+    fun formatScore(i: Int): String {
+        var i = i
+        if (i < 0) {
+            i = 0
+        }
+        val s = i.toString()
+        return if (s.length == 1) "00$s" else if (s.length == 2) "0$s" else s
+    }
+
+    private fun sendBroadcastResult(state: Char, value1: Int, value2: Int, value3: Int) {
+        activity.sendBroadcast(Intent(MultiplayerResultFragment.ACTION_RESULT_RECEIVED)
+                .putExtra("state", state)
+                .putExtra("RightAnswers", value1)
+                .putExtra("WrongAnswers", value2)
+                .putExtra("DropQuestions", value3))
+    }
+
+    private fun sendBroadcastFinalResult(state: Char, displayName : String,value1: Int){
+        activity.sendBroadcast(Intent(MultiplayerResultFragment.ACTION_RESULT_RECEIVED)
+                .putExtra("state", state)
+                .putExtra("DisplayName", displayName)
+                .putExtra("RightAnswers", value1))
+    }
+
+
+    private fun sendBroadcastMessage(state: Char, value: Int){
+        activity.sendBroadcast(Intent(GameDetailFragment.ACTION_MESSAGE_RECEIVED)
+                .putExtra("state", state)
+                .putExtra("value", value));
+    }
+
+
 
     private val mRoomStatusUpdateCallback = object : RoomStatusUpdateCallback() {
         // Called when we are connected to the room. We're not ready to play yet! (maybe not everybody
@@ -271,7 +351,7 @@ class PlayGameLib(private val activity : Activity) {
 
             //get participants and my ID:
             GameConstants.mParticipants = room?.participants!!
-            GameConstants.mMyId = room.getParticipantId(mPlayerId)
+            GameConstants.mMyId = room.getParticipantId(GameConstants.mPlayerId)
 
             // save room ID if its not initialized in onRoomCreated() so we can leave cleanly before the game starts.
             if (GameConstants.mRoomId == null) {
@@ -279,8 +359,8 @@ class PlayGameLib(private val activity : Activity) {
             }
 
             // print out the list of participants (for debug purposes)
-            Log.d(TAG, "Room ID: $GameConstants.mRoomId")
-            Log.d(TAG, "My ID $GameConstants.mMyId")
+            Log.d(TAG, "Room ID: ${GameConstants.mRoomId}")
+            Log.d(TAG, "My ID ${GameConstants.mMyId}")
             Log.d(TAG, "<< CONNECTED TO ROOM>>")
             for (p in GameConstants.mParticipants){
                 logD(TAG, "Participants Display Name "+p.displayName)
@@ -446,7 +526,30 @@ class PlayGameLib(private val activity : Activity) {
         // state = Q, int = 0 => Question Next
         // state = Q, int = 1 => Question Previous
 
+    // Result :
+    // state = F : Final result
+    // state = R : Result
+    // right = Right Answers
+    // wrong = Wrong Answers
+    // drop = Drop Questions
+    fun broadcastResult(state :Char, right : Int, wrong: Int, drop : Int){
+        mResultBuf[0] = state.toByte()
+        mResultBuf[1] = right.toByte()
+        mResultBuf[2] = wrong.toByte()
+        mResultBuf[3] = drop.toByte()
 
+        for (p in GameConstants.mParticipants){
+            if (p.participantId == GameConstants.mMyId) {
+                continue
+            }
+            if (p.status != Participant.STATUS_JOINED) {
+                continue
+            }
+
+            // Sending result to all the participants
+            sendReliableMessage(p, mResultBuf)
+        }
+    }
 
     fun broadcastMessage(state: Char, score: Int) {
         // First byte in message indicates whether its Right, Wrong or Drop Question.
@@ -464,12 +567,13 @@ class PlayGameLib(private val activity : Activity) {
                 continue
             }
 
+            // Sending button inputs to all the participants and changing the UI
             sendReliableMessage(p, mMsgBuffer)
         }
 
     }
 
-    private fun sendReliableMessage(p: Participant, mMsgBuffer1: ByteArray) {
+    private fun sendReliableMessage(p: Participant, mMsgBuffer: ByteArray) {
         GameConstants.mRealTimeMultiplayerClient?.sendReliableMessage(mMsgBuffer,
                 GameConstants.mRoomId!!, p.participantId, RealTimeMultiplayerClient.ReliableMessageSentCallback { statusCode, tokenId, recipientParticipantId ->
             Log.d(TAG, "RealTime message sent")
@@ -483,8 +587,6 @@ class PlayGameLib(private val activity : Activity) {
 
     // Broadcast my score to everybody else.
     fun broadcastScore(finalScore: Boolean) {
-
-
 
         // First byte in message indicates whether it's a final score or not
         GameConstants.mMsgBuf[0] = (if (finalScore) 'F' else 'U').toByte()

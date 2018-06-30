@@ -96,66 +96,26 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
     override fun onClick(view: View?) {
         when(view?.id){
             R.id.imageButtonNextAmount ->{
-                if (k<20){
-                    k++
-                    l=k
-                    amount = amountList[k]
-                    textViewAmount.text = amount
-                }else {
-                    k=0
-                    amount = amountList[k]
-                    textViewAmount.text = amount
-                }
+                nextAmount()
 //                playGameLib?.broadcastScore(true)
                 playGameLib?.broadcastMessage('A',0)
                 resetCountdownTimer(10000,1000)
             }
 
             R.id.imageButtonPreviousAmount ->{
-                if (l>0){
-                    l--
-                    k=l
-                    amount = amountList[l]
-                    textViewAmount.text = amount
-                }else {
-                    l = 20
-                    amount = amountList[l]
-                    textViewAmount.text = amount
-                }
+                previousAmount()
                 playGameLib?.broadcastMessage('A',1)
                 resetCountdownTimer(10000,1000)
 
             }
             R.id.imageButtonPreviousSubject ->{
-                if (j > 0) {
-                    j--
-                    i = j
-                    subCode = subjectCode[j]
-                    subject = subjectList[j]
-                    textViewSubject.text = subject
-                } else {
-                    j = 6
-                    subCode = subjectCode[j]
-                    subject = subjectList[j]
-                    textViewSubject.text = subject
-                }
+                previousSubject()
                 playGameLib?.broadcastMessage('S',1)
                 resetCountdownTimer(10000,1000)
             }
 
             R.id.imageButtonNextSubject ->{
-                if (i < 6) {
-                    i++
-                    j = i
-                    subject = subjectList[i]
-                    subCode = subjectCode[i]
-                    textViewSubject.text = subject
-                } else {
-                    i = 0
-                    subject = subjectList[i]
-                    subCode = subjectCode[i]
-                    textViewSubject.text = subject
-                }
+                nextSubject()
                 resetCountdownTimer(10000,1000)
                 playGameLib?.broadcastMessage('S',0)
             }
@@ -201,6 +161,9 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                 quizFragment.arguments = bundle
                 playGameLib?.switchToFragment(quizFragment)
                 unRegisterBroadcastReceiver()
+                if (countDownTimer!=null){
+                    countDownTimer?.cancel()
+                }
 
             }
         }
@@ -268,49 +231,91 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                     }
                 }
 
-        const val ACTION_FINISHED_SYNC = "com.example.mayank.googleplaygame.ACTION_MESSAGE_RECEIVED"
+        const val ACTION_MESSAGE_RECEIVED = "com.example.mayank.googleplaygame.ACTION_MESSAGE_RECEIVED"
     }
 
-    private val syncIntentFilter = IntentFilter(ACTION_FINISHED_SYNC)
+    private val syncIntentFilter = IntentFilter(ACTION_MESSAGE_RECEIVED)
 
 
     private val messageBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (ACTION_FINISHED_SYNC == intent.action) {
+            if (ACTION_MESSAGE_RECEIVED == intent.action) {
                 val state = intent.getCharExtra("state", 'Z')
                 val value = intent.getIntExtra("value", -1)
                 logD(TAG, "State - $state")
                 logD(TAG, "Value - $value")
                 if (state == 'A'){
                     if (value == 0){
-                        k++
-                        l=k
-                        amount = amountList[k]
-                        textViewAmount.text = amount
+                        nextAmount()
                     }else if(value == 1){
-                        l--
-                        k=l
-                        amount = amountList[l]
-                        textViewAmount.text = amount
+                        previousAmount()
                     }
                     resetCountdownTimer(10000,1000)
                 }else if(state == 'S'){
                     if (value == 0){
-                        i++
-                        j=i
-                        subject = subjectList[i]
-                        subCode = subjectCode[i]
-                        textViewSubject.text = subject
+                        nextSubject()
                     }else if(value == 1){
-                        j--
-                        i=j
-                        subject = subjectList[j]
-                        subCode = subjectCode[j]
-                        textViewSubject.text = subject
+                        previousSubject()
                     }
                     resetCountdownTimer(10000,1000)
                 }
             }
+        }
+    }
+
+    private fun nextAmount(){
+        if (k<20){
+            k++
+            l=k
+            amount = amountList[k]
+            textViewAmount.text = amount
+        }else {
+            k=0
+            amount = amountList[k]
+            textViewAmount.text = amount
+        }
+    }
+
+    private fun previousAmount(){
+        if (l>0){
+            l--
+            k=l
+            amount = amountList[l]
+            textViewAmount.text = amount
+        }else {
+            l = 20
+            amount = amountList[l]
+            textViewAmount.text = amount
+        }
+    }
+
+    private fun nextSubject(){
+        if (i < 6) {
+            i++
+            j = i
+            subject = subjectList[i]
+            subCode = subjectCode[i]
+            textViewSubject.text = subject
+        } else {
+            i = 0
+            subject = subjectList[i]
+            subCode = subjectCode[i]
+            textViewSubject.text = subject
+        }
+    }
+
+    private fun previousSubject(){
+        if (j > 0) {
+            j--
+            i = j
+            subCode = subjectCode[j]
+            subject = subjectList[j]
+            textViewSubject.text = subject
+        } else {
+            j = 6
+            subCode = subjectCode[j]
+            subject = subjectList[j]
+            textViewSubject.text = subject
         }
     }
 

@@ -6,7 +6,11 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import com.example.mayank.googleplaygame.R
 
-class MultiPlayerActivity : AppCompatActivity(), GameDetailFragment.OnFragmentInteractionListener, GameMenuFragment.OnFragmentInteractionListener, QuizFragment.OnFragmentInteractionListener {
+class MultiPlayerActivity : AppCompatActivity(),
+        GameDetailFragment.OnFragmentInteractionListener,
+        GameMenuFragment.OnFragmentInteractionListener,
+        QuizFragment.OnFragmentInteractionListener,
+        MultiplayerResultFragment.OnFragmentInteractionListener{
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
