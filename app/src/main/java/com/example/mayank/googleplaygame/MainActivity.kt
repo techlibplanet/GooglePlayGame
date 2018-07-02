@@ -21,7 +21,7 @@ import com.google.android.gms.games.Games
 import com.google.android.gms.games.InvitationsClient
 import com.google.android.gms.games.RealTimeMultiplayerClient
 import android.view.Gravity
-
+import com.example.mayank.googleplaygame.quickplay.QuickPlayActivity
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {

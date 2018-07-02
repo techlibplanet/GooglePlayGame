@@ -9,14 +9,20 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.WindowManager
 import com.example.mayank.googleplaygame.Constants.logD
+import com.example.mayank.googleplaygame.PlayGameLib.GameConstants.mFinishedParticipants
+import com.example.mayank.googleplaygame.PlayGameLib.GameConstants.mInvitationClient
+import com.example.mayank.googleplaygame.PlayGameLib.GameConstants.mParticipantScore
 import com.example.mayank.googleplaygame.PlayGameLib.GameConstants.mResultBuf
 import com.example.mayank.googleplaygame.multiplay.GameDetailFragment
 import com.example.mayank.googleplaygame.multiplay.GameMenuFragment
 import com.example.mayank.googleplaygame.multiplay.MultiplayerResultFragment
+import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.games.*
+import com.google.android.gms.games.multiplayer.Invitation
+import com.google.android.gms.games.multiplayer.InvitationCallback
 import com.google.android.gms.games.multiplayer.Multiplayer
 import com.google.android.gms.games.multiplayer.Participant
 import com.google.android.gms.games.multiplayer.realtime.*
@@ -57,7 +63,9 @@ class PlayGameLib(private val activity : Activity) {
         // Participants who sent us their final score.
         var mFinishedParticipants: MutableSet<String> = HashSet()
         var mPlayerId: String? = null
-    }
+        var mInvitationClient : InvitationsClient ? = null
+        lateinit var modelList: MutableList<ResultViewModel>
+}
 
     private val TAG = PlayGameLib::class.java.simpleName
 
@@ -68,6 +76,9 @@ class PlayGameLib(private val activity : Activity) {
         GameConstants.displayName = getDisplayName()
         GameConstants.mPlayerId = getPlayerId()
         GameConstants.mMyId = getMyId()
+        GameConstants.modelList = mutableListOf<ResultViewModel>()
+//        GameConstants.mInvitationClient = getInvitationClient()
+
 
     }
 
@@ -98,6 +109,16 @@ class PlayGameLib(private val activity : Activity) {
             return GameConstants.mRoomId
         }
         return null
+    }
+
+    fun getInvitationClient(): InvitationsClient? {
+        return Games.getInvitationsClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
+    }
+
+    fun showInvitationInbox(){
+        Games.getInvitationsClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
+                .invitationInboxIntent
+                .addOnSuccessListener { intent -> activity.startActivityForResult(intent, GameConstants.RC_INVITATION_INBOX) }
     }
 
     fun getMyId(): String? {
@@ -278,16 +299,17 @@ class PlayGameLib(private val activity : Activity) {
             val value2 = buf[2].toInt()
             val value3 = buf[1].toInt()
             Log.d(TAG, "Message received: " + buf[0].toChar() + "/" + buf[1].toInt()+ "/" + buf[2].toInt()+ "/" + buf[3].toInt())
-            // score update.
-            val existingScore = if (GameConstants.mParticipantScore.containsKey(sender)) GameConstants.mParticipantScore[sender] else 0
-            val thisScore = value1
-            if (thisScore> existingScore!!){
-                GameConstants.mParticipantScore.put(sender, thisScore)
+            GameConstants.mParticipantScore.put(sender, value1)
+            if (GameConstants.mFinishedParticipants.contains(sender)){
+                logD(TAG, "Participants already added")
+            }else {
+                GameConstants.mFinishedParticipants.add(sender)
+                logD(TAG, "Adding sender in realtime")
+                sendBroadcastResult(state, value1, value2, value3)
             }
-            //sendBroadcastResult(state, value1, value2, value3)
-            //updateScore(sender, value1)
 
-//            updatePeerScores()
+
+
         }
 
         if (state == 'A' || state == 'S'){
@@ -300,13 +322,6 @@ class PlayGameLib(private val activity : Activity) {
 
     }
 
-    fun updateScore(sender: String, value1: Int) {
-        val existingScore = if (GameConstants.mParticipantScore.containsKey(sender)) GameConstants.mParticipantScore[sender] else 0
-        val thisScore = value1
-        if (thisScore> existingScore!!){
-            GameConstants.mParticipantScore.put(sender, thisScore)
-        }
-    }
 
 
     // formats a score as a three-digit number
@@ -320,6 +335,7 @@ class PlayGameLib(private val activity : Activity) {
     }
 
     private fun sendBroadcastResult(state: Char, value1: Int, value2: Int, value3: Int) {
+        logD(TAG, "Sending broadcast")
         activity.sendBroadcast(Intent(MultiplayerResultFragment.ACTION_RESULT_RECEIVED)
                 .putExtra("state", state)
                 .putExtra("RightAnswers", value1)
@@ -423,8 +439,11 @@ class PlayGameLib(private val activity : Activity) {
 
 
     fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?){
+        logD(TAG, "Request code - $requestCode")
+        logD(TAG, "Result Code - $resultCode")
         if (requestCode == GameConstants.RC_SELECT_PLAYERS) {
             // we got the result from the "select players" UI -- ready to create the room
+            logD(TAG, "Inside rc select player activity result")
             if (intent != null) {
                 handleSelectPlayersResult(resultCode, intent)
             }
@@ -441,12 +460,58 @@ class PlayGameLib(private val activity : Activity) {
                     // something else (like minimizing the waiting room UI).
                     leaveRoom()
             }
+        }else if (requestCode == GameConstants.RC_INVITATION_INBOX) {
+            if (resultCode != Activity.RESULT_OK) {
+                // Canceled or some error.
+                return;
+            }
+
+            val invitation = intent?.extras?.getParcelable<Invitation>(Multiplayer.EXTRA_INVITATION)
+            if (invitation != null) {
+//                val builder = RoomConfig.builder(mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
+//                mJoinedRoomConfig = builder.build()
+//                Games.getRealTimeMultiplayerClient(thisActivity, GoogleSignIn.getLastSignedInAccount(thisActivity)!!)
+//                        .join(mJoinedRoomConfig!!)
+//                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                acceptInviteToRoom(invitation.invitationId)
+            }
+
+        }
+
+    }
+
+    private fun acceptInviteToRoom(invitationId: String?) {
+        Log.d(TAG, "Accepting invitation: $invitationId")
+
+        GameConstants.mRoomConfig = RoomConfig.builder(mRoomUpdateCallback)
+                .setInvitationIdToAccept(invitationId)
+                .setOnMessageReceivedListener(mOnRealTimeMessageReceivedListener)
+                .setRoomStatusUpdateCallback(mRoomStatusUpdateCallback).build()
+        activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        Games.getRealTimeMultiplayerClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!).join(GameConstants.mRoomConfig!!)
+
+
+    }
+
+    val mInvitationCallbackHandler = object : InvitationCallback() {
+        override fun onInvitationRemoved(invitationId: String) {
+            logD(TAG, "Invitation removed - $invitationId")
+        }
+
+        override fun onInvitationReceived(invitation: Invitation) {
+            val builder = RoomConfig.builder(mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
+            GameConstants.mRoomConfig = builder.build()
+            Games.getRealTimeMultiplayerClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
+                    .join(GameConstants.mRoomConfig!!)
+            activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
     }
 
 
     private fun handleSelectPlayersResult(response: Int, data: Intent) {
+        logD(TAG, "Inside select player result")
         if (response != Activity.RESULT_OK) {
             Log.w(TAG, "*** select players UI cancelled, $response")
         }
@@ -577,9 +642,9 @@ class PlayGameLib(private val activity : Activity) {
         GameConstants.mRealTimeMultiplayerClient?.sendReliableMessage(mMsgBuffer,
                 GameConstants.mRoomId!!, p.participantId, RealTimeMultiplayerClient.ReliableMessageSentCallback { statusCode, tokenId, recipientParticipantId ->
             Log.d(TAG, "RealTime message sent")
-            Log.d(TAG, "  statusCode: $statusCode")
-            Log.d(TAG, "  tokenId: $tokenId")
-            Log.d(TAG, "  recipientParticipantId: $recipientParticipantId")
+//            Log.d(TAG, "  statusCode: $statusCode")
+//            Log.d(TAG, "  tokenId: $tokenId")
+//            Log.d(TAG, "  recipientParticipantId: $recipientParticipantId")
         })
                 ?.addOnSuccessListener { tokenId -> Log.d(TAG, "Created a reliable message with tokenId: " + tokenId!!) }
     }

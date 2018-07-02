@@ -10,6 +10,7 @@ import android.support.v4.app.Fragment
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +21,8 @@ import com.example.mayank.googleplaygame.R
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewAdapter
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewModel
 import com.google.android.gms.games.multiplayer.Participant
+import java.util.*
+import kotlin.math.log
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -45,10 +48,8 @@ class MultiplayerResultFragment : Fragment() {
     private var dropQuestions: Int? = 0
     private var listener: OnFragmentInteractionListener? = null
 
-    private lateinit var resultRecyclerView : RecyclerView
+    private lateinit var resultRecyclerView: RecyclerView
     val adapter: ResultViewAdapter by lazy { ResultViewAdapter() }
-    private lateinit var modelList: MutableList<ResultViewModel>
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,27 +77,41 @@ class MultiplayerResultFragment : Fragment() {
         resultRecyclerView.addItemDecoration(DividerItemDecoration(activity, LinearLayoutManager.VERTICAL))
 
         resultRecyclerView.adapter = adapter
-        modelList = mutableListOf<ResultViewModel>()
         setSettingsItem()
         return view
     }
 
     private fun setSettingsItem() {
-        modelList.clear()
-        modelList.add(ResultViewModel("Player Name","Scores"))
-        //modelList.add(ResultViewModel(PlayGameLib.GameConstants.displayName!!, rightAnswers.toString()))
-        updateMyScore(PlayGameLib.GameConstants.mMyId!!, rightAnswers!!)
+        PlayGameLib.GameConstants.modelList.clear()
+        PlayGameLib.GameConstants.modelList.add(ResultViewModel("Player Name", "Scores"))
+
+        PlayGameLib.GameConstants.modelList.add(ResultViewModel(PlayGameLib.GameConstants.displayName!!, formatScore(rightAnswers!!)))
+
+        for (p in PlayGameLib.GameConstants.mParticipants) {
+            if (PlayGameLib.GameConstants.mRoomId != null) {
+                val pid = p.participantId
+                if (pid == PlayGameLib.GameConstants.mMyId) {
+                    logD(TAG, "Adding sender in fragment")
+                    PlayGameLib.GameConstants.mFinishedParticipants.add(pid)
+
+                }
+            }
+        }
+//        updateMyScore(PlayGameLib.GameConstants.mMyId!!, rightAnswers!!)
+
         updateScore()
-        setRecyclerViewAdapter(modelList)
+        //setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
     }
+
 
     private fun setRecyclerViewAdapter(list: List<ResultViewModel>) {
         adapter.items = list
         adapter.notifyDataSetChanged()
     }
 
-    fun updateScore(){
-        if (PlayGameLib.GameConstants.mRoomId!= null){
+    fun updateScore() {
+        logD(TAG, "Inside update score")
+        if (PlayGameLib.GameConstants.mRoomId != null) {
             for (p in PlayGameLib.GameConstants.mParticipants) {
                 val pid = p.participantId
                 if (pid == PlayGameLib.GameConstants.mMyId) {
@@ -112,9 +127,30 @@ class MultiplayerResultFragment : Fragment() {
 //                        p.getDisplayName()
 //                ++i
 
-                if (pid== PlayGameLib.GameConstants.mMyId){
-                    modelList.add(ResultViewModel(p.displayName, formatScore(score!!)))
-                    setRecyclerViewAdapter(modelList)
+//                if (pid== PlayGameLib.GameConstants.mMyId){
+//                    PlayGameLib.GameConstants.modelList.add(ResultViewModel(p.displayName, formatScore(rightAnswers!!)))
+//                    setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
+//                }
+                logD(TAG, "Participants list size - ${PlayGameLib.GameConstants.mParticipants.size}")
+                logD(TAG, "Finished participants list size ${PlayGameLib.GameConstants.mFinishedParticipants.size}")
+
+
+
+                if (PlayGameLib.GameConstants.mParticipants.size == PlayGameLib.GameConstants.mFinishedParticipants.size) {
+
+                    PlayGameLib.GameConstants.modelList.add(ResultViewModel(p.displayName, formatScore(score!!)))
+
+
+                    // dismiss progress bar
+                    Log.d(TAG, "All players finish the game")
+                    PlayGameLib.GameConstants.modelList.sortByDescending {
+                        it.rightAnswers
+                    }
+                    setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
+
+                } else {
+                    // show progress bar
+                    Log.d(TAG, "Please wait for other participants to finish the game")
                 }
 
 
@@ -122,13 +158,6 @@ class MultiplayerResultFragment : Fragment() {
         }
     }
 
-    fun updateMyScore(sender: String, value1: Int) {
-        val existingScore = if (PlayGameLib.GameConstants.mParticipantScore.containsKey(sender)) PlayGameLib.GameConstants.mParticipantScore[sender] else 0
-        val thisScore = value1
-        if (thisScore> existingScore!!){
-            PlayGameLib.GameConstants.mParticipantScore.put(sender, thisScore)
-        }
-    }
 
     // formats a score as a three-digit number
     fun formatScore(i: Int): String {
@@ -179,7 +208,9 @@ class MultiplayerResultFragment : Fragment() {
 
     private val resultBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (GameDetailFragment.ACTION_MESSAGE_RECEIVED == intent.action) {
+            logD(TAG, "Receiving broadcast...")
+            logD(TAG, "${intent.action}")
+            if (MultiplayerResultFragment.ACTION_RESULT_RECEIVED == intent.action) {
                 val state = intent.getCharExtra("state", 'Z')
                 val rightAnswers = intent.getIntExtra("RightAnswers", -1)
                 val wrongAnswers = intent.getIntExtra("WrongAnswers", -1)
@@ -188,6 +219,7 @@ class MultiplayerResultFragment : Fragment() {
                 logD(TAG, "RightAnswers - $rightAnswers")
                 logD(TAG, "WrongAnswers - $wrongAnswers")
                 logD(TAG, "DropQuestions - $dropQuestions")
+                updateScore()
 
 
             }
@@ -205,7 +237,7 @@ class MultiplayerResultFragment : Fragment() {
          */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(param1: String, param2: String, param3 : String) =
+        fun newInstance(param1: String, param2: String, param3: String) =
                 MultiplayerResultFragment().apply {
                     arguments = Bundle().apply {
                         putString(RIGHT_ANSWERS, param1)

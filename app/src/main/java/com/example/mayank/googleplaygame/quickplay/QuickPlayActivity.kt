@@ -21,6 +21,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import com.example.mayank.googleplaygame.Constants.logD
+import com.example.mayank.googleplaygame.PlayGameLib
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.games.*
 import com.google.android.gms.games.multiplayer.Invitation
@@ -35,7 +36,7 @@ class QuickPlayActivity : AppCompatActivity(), View.OnClickListener {
 
 
     private val TAG = QuickPlayActivity::class.java.simpleName
-    private val RC_SELECT_PLAYERS = 9006
+    private val RC_SELECT_PLAYERS = 10000
     private val ROLE_ANY: Long = 0x0 // can play in any match.
     private val ROLE_FARMER: Long = 0x1 // 001 in binary
     private val ROLE_ARCHER: Long = 0x2 // 010 in binary
@@ -43,6 +44,7 @@ class QuickPlayActivity : AppCompatActivity(), View.OnClickListener {
     private val RC_WAITING_ROOM = 9007
     var mWaitingRoomFinishedFromCode = false
     private val RC_INVITATION_INBOX = 9008
+    private var playGameLib : PlayGameLib? = null
 
     private var mJoinedRoomConfig: RoomConfig? = null
     private var mMyParticipantId: String? = null
@@ -57,8 +59,10 @@ class QuickPlayActivity : AppCompatActivity(), View.OnClickListener {
             findViewById<Button>(id).setOnClickListener(this)
         }
 
+        playGameLib = PlayGameLib(this)
+
 //        checkForInvitation()
-        mInvitationClient?.registerInvitationCallback(mInvitationCallbackHandler)
+        //mInvitationClient?.registerInvitationCallback(mInvitationCallbackHandler)
 
 
     }
@@ -123,92 +127,95 @@ class QuickPlayActivity : AppCompatActivity(), View.OnClickListener {
 
     }
 
+
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         logD(TAG, "Inside on Activity result")
-        if (requestCode == RC_SELECT_PLAYERS) {
-            if (resultCode != Activity.RESULT_OK) {
-                // Canceled or some other error.
-                logD(TAG, "Canceled or some other error.")
-                return
-            }
-
-            // Get the invitee list.
-            val invitees = data!!.getStringArrayListExtra(Games.EXTRA_PLAYER_IDS)
-
-            // Get Automatch criteria.
-            val minAutoPlayers = data.getIntExtra(Multiplayer.EXTRA_MIN_AUTOMATCH_PLAYERS, 0)
-            val maxAutoPlayers = data.getIntExtra(Multiplayer.EXTRA_MAX_AUTOMATCH_PLAYERS, 0)
-
-            logD(TAG, "Max Auto - $maxAutoPlayers")
-
-            // Create the room configuration.
-            val roomBuilder = RoomConfig.builder(mRoomUpdateCallback)
-                    .setOnMessageReceivedListener(mMessageReceivedHandler)
-                    .setRoomStatusUpdateCallback(mRoomStatusCallbackHandler)
-                    .addPlayersToInvite(invitees)
-            if (minAutoPlayers > 0) {
-                logD(TAG, "Inside automatch")
-                roomBuilder.setAutoMatchCriteria(
-                        RoomConfig.createAutoMatchCriteria(minAutoPlayers, maxAutoPlayers, 0))
-            }
-
-            // Save the roomConfig so we can use it if we call leave().
-            mJoinedRoomConfig = roomBuilder.build()
-            Games.getRealTimeMultiplayerClient(this, GoogleSignIn.getLastSignedInAccount(this)!!)
-                    .create(mJoinedRoomConfig!!)
-        }
-
-        if (requestCode == RC_WAITING_ROOM) {
-
-            // Look for finishing the waiting room from code, for example if a
-            // "start game" message is received.  In this case, ignore the result.
-            if (mWaitingRoomFinishedFromCode) {
-                return;
-            }
-
-            if (resultCode == Activity.RESULT_OK) {
-                // Start the game!
-            } else if (resultCode == Activity.RESULT_CANCELED) {
-                // Waiting room was dismissed with the back button. The meaning of this
-                // action is up to the game. You may choose to leave the room and cancel the
-                // match, or do something else like minimize the waiting room and
-                // continue to connect in the background.
-
-                // in this example, we take the simple approach and just leave the room:
-                if (mRoom?.roomId!=null){
-                    Games.getRealTimeMultiplayerClient(thisActivity,
-                            GoogleSignIn.getLastSignedInAccount(this)!!)
-                            .leave(mJoinedRoomConfig!!, mRoom?.roomId!!);
-                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                }
-
-            } else if (resultCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
-                // player wants to leave the room.
-                Games.getRealTimeMultiplayerClient(thisActivity,
-                        GoogleSignIn.getLastSignedInAccount(this)!!)
-                        .leave(mJoinedRoomConfig!!, mRoom?.roomId!!);
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            }
-        }
-
-        if (requestCode == RC_INVITATION_INBOX) {
-            if (resultCode != Activity.RESULT_OK) {
-                // Canceled or some error.
-                return;
-            }
-
-            val invitation = data?.extras?.getParcelable<Invitation>(Multiplayer.EXTRA_INVITATION)
-            if (invitation != null) {
-//                val builder = RoomConfig.builder(mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
-//                mJoinedRoomConfig = builder.build()
-//                Games.getRealTimeMultiplayerClient(thisActivity, GoogleSignIn.getLastSignedInAccount(thisActivity)!!)
-//                        .join(mJoinedRoomConfig!!)
-//                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                acceptInviteToRoom(invitation.invitationId)
-            }
-
-        }
+        playGameLib?.onActivityResult(requestCode, resultCode, data)
+//        if (requestCode == RC_SELECT_PLAYERS) {
+//            if (resultCode != Activity.RESULT_OK) {
+//                // Canceled or some other error.
+//                logD(TAG, "Canceled or some other error.")
+//                return
+//            }
+//
+//            // Get the invitee list.
+//            val invitees = data!!.getStringArrayListExtra(Games.EXTRA_PLAYER_IDS)
+//
+//            // Get Automatch criteria.
+//            val minAutoPlayers = data.getIntExtra(Multiplayer.EXTRA_MIN_AUTOMATCH_PLAYERS, 0)
+//            val maxAutoPlayers = data.getIntExtra(Multiplayer.EXTRA_MAX_AUTOMATCH_PLAYERS, 0)
+//
+//            logD(TAG, "Max Auto - $maxAutoPlayers")
+//
+//            // Create the room configuration.
+//            val roomBuilder = RoomConfig.builder(mRoomUpdateCallback)
+//                    .setOnMessageReceivedListener(mMessageReceivedHandler)
+//                    .setRoomStatusUpdateCallback(mRoomStatusCallbackHandler)
+//                    .addPlayersToInvite(invitees)
+//            if (minAutoPlayers > 0) {
+//                logD(TAG, "Inside automatch")
+//                roomBuilder.setAutoMatchCriteria(
+//                        RoomConfig.createAutoMatchCriteria(minAutoPlayers, maxAutoPlayers, 0))
+//            }
+//
+//            // Save the roomConfig so we can use it if we call leave().
+//            mJoinedRoomConfig = roomBuilder.build()
+//            Games.getRealTimeMultiplayerClient(this, GoogleSignIn.getLastSignedInAccount(this)!!)
+//                    .create(mJoinedRoomConfig!!)
+//        }
+//
+//        if (requestCode == RC_WAITING_ROOM) {
+//
+//            // Look for finishing the waiting room from code, for example if a
+//            // "start game" message is received.  In this case, ignore the result.
+//            if (mWaitingRoomFinishedFromCode) {
+//                return;
+//            }
+//
+//            if (resultCode == Activity.RESULT_OK) {
+//                // Start the game!
+//            } else if (resultCode == Activity.RESULT_CANCELED) {
+//                // Waiting room was dismissed with the back button. The meaning of this
+//                // action is up to the game. You may choose to leave the room and cancel the
+//                // match, or do something else like minimize the waiting room and
+//                // continue to connect in the background.
+//
+//                // in this example, we take the simple approach and just leave the room:
+//                if (mRoom?.roomId!=null){
+//                    Games.getRealTimeMultiplayerClient(thisActivity,
+//                            GoogleSignIn.getLastSignedInAccount(this)!!)
+//                            .leave(mJoinedRoomConfig!!, mRoom?.roomId!!);
+//                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+//                }
+//
+//            } else if (resultCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
+//                // player wants to leave the room.
+//                Games.getRealTimeMultiplayerClient(thisActivity,
+//                        GoogleSignIn.getLastSignedInAccount(this)!!)
+//                        .leave(mJoinedRoomConfig!!, mRoom?.roomId!!);
+//                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+//            }
+//        }
+//
+//        if (requestCode == RC_INVITATION_INBOX) {
+//            if (resultCode != Activity.RESULT_OK) {
+//                // Canceled or some error.
+//                return;
+//            }
+//
+//            val invitation = data?.extras?.getParcelable<Invitation>(Multiplayer.EXTRA_INVITATION)
+//            if (invitation != null) {
+////                val builder = RoomConfig.builder(mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
+////                mJoinedRoomConfig = builder.build()
+////                Games.getRealTimeMultiplayerClient(thisActivity, GoogleSignIn.getLastSignedInAccount(thisActivity)!!)
+////                        .join(mJoinedRoomConfig!!)
+////                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+//                acceptInviteToRoom(invitation.invitationId)
+//            }
+//
+//        }
 
 
     }

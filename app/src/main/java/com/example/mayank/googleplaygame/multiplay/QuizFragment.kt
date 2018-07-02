@@ -191,6 +191,10 @@ class QuizFragment : Fragment(), View.OnClickListener {
     }
 
     private fun changeToResultScreen(){
+        if (countDownTimer!=null){
+            logD(TAG, "Cancel countdown timer in quiz fragment")
+            countDownTimer?.cancel()
+        }
         logD(TAG, "Display Name - ${PlayGameLib.GameConstants.displayName}")
         playGameLib?.broadcastResult('R', rightAnswers, wrongAnswers, dropQuestions)
         val bundle = Bundle()
@@ -202,7 +206,6 @@ class QuizFragment : Fragment(), View.OnClickListener {
         resultFragment.arguments = bundle
         playGameLib?.switchToFragment(resultFragment)
     }
-
 
 
     private fun getRandomNonRepeatingIntegers(size: Int, min: Int,

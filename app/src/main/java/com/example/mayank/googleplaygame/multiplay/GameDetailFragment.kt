@@ -292,6 +292,7 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
     private fun nextSubject(){
         if (i < 6) {
             i++
+            logD(TAG, "value of i : $i")
             j = i
             subject = subjectList[i]
             subCode = subjectCode[i]

@@ -13,6 +13,8 @@ import com.example.mayank.googleplaygame.Constants.logD
 import com.example.mayank.googleplaygame.PlayGameLib
 
 import com.example.mayank.googleplaygame.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.games.Games
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -36,7 +38,7 @@ class GameMenuFragment : Fragment(), View.OnClickListener {
     private var listener: OnFragmentInteractionListener? = null
     private var playGameLib : PlayGameLib? = null
 
-    private val CLICKABLES = intArrayOf(R.id.quick_game, R.id.multi_play_button)
+    private val CLICKABLES = intArrayOf(R.id.quick_game, R.id.multi_play_button, R.id.show_invitation_button)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +47,8 @@ class GameMenuFragment : Fragment(), View.OnClickListener {
             param2 = it.getString(ARG_PARAM2)
         }
         playGameLib = PlayGameLib(activity!!)
+
+//        PlayGameLib.GameConstants.mInvitationClient.registerInvitationCallback()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -65,16 +69,22 @@ class GameMenuFragment : Fragment(), View.OnClickListener {
             R.id.multi_play_button ->{
                 playGameLib?.invitePlayers()
             }
+            R.id.show_invitation_button ->{
+                showInvitationInbox()
+            }
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        logD("GameMenuFragment", "Inside on activity result")
-        playGameLib?.onActivityResult(requestCode, resultCode, data)
-        //super.onActivityResult(requestCode, resultCode, data)
-
+    private fun showInvitationInbox() {
+        playGameLib?.showInvitationInbox()
 
     }
+
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        logD("GameMenuFragment", "Inside on activity result")
+//        playGameLib?.onActivityResult(requestCode, resultCode, data)
+//        //super.onActivityResult(requestCode, resultCode, data)
+//    }
 
     // TODO: Rename method, update argument and hook method into UI event
     fun onButtonPressed(uri: Uri) {
