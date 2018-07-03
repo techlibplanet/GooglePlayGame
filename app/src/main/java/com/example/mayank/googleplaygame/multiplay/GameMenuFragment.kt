@@ -15,6 +15,7 @@ import com.example.mayank.googleplaygame.PlayGameLib
 import com.example.mayank.googleplaygame.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.games.Games
+import kotlinx.android.synthetic.main.activity_multi_player.*
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER

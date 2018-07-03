@@ -56,7 +56,7 @@ class DashboardActivity : AppCompatActivity(), View.OnClickListener {
             R.id.play_button ->{
                 val intent = Intent(this, MultiPlayerActivity::class.java)
                 startActivity(intent)
-                finish()
+//                finish()
             }
         }
 

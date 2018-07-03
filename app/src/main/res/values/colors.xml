@@ -6,4 +6,10 @@
     <color name="white">#FFFFFF</color>
     <color name="colorBlack">#000000</color>
     <color name="colorWhite">#FFFFFF</color>
+    <color name="colorSkyBlue">#65DEF1</color>
+    <color name="backgroundcolor">#3E454F</color>
+
+    <!--<color name="colorPrimary">#1B5E20</color>-->
+    <!--<color name="colorPrimaryDark">#43A047</color>-->
+    <!--<color name="colorAccent">#ffffff</color>-->
 </resources>

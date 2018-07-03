@@ -22,6 +22,6 @@ class ResultViewAdapter: RecyclerView.Adapter<ResultViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: ResultViewHolder, position: Int) {
-        holder.bindView(items[position], position)
+        holder.bindView(context,items[position], position)
     }
 }

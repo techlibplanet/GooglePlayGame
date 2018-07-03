@@ -14,6 +14,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.Toast
 import com.example.mayank.googleplaygame.Constants.logD
 import com.example.mayank.googleplaygame.PlayGameLib
 
@@ -21,14 +23,13 @@ import com.example.mayank.googleplaygame.R
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewAdapter
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewModel
 import com.google.android.gms.games.multiplayer.Participant
-import java.util.*
-import kotlin.math.log
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val RIGHT_ANSWERS = "RightAnswers"
 private const val WRONG_ANSWERS = "WrongAnswers"
 private const val DROP_QUESTIONS = "DropQuestions"
+private const val AMOUNT = "Amount"
 
 /**
  * A simple [Fragment] subclass.
@@ -46,6 +47,7 @@ class MultiplayerResultFragment : Fragment() {
     private var rightAnswers: Int? = 0
     private var wrongAnswers: Int? = 0
     private var dropQuestions: Int? = 0
+    private var amount : Int? = 0
     private var listener: OnFragmentInteractionListener? = null
 
     private lateinit var resultRecyclerView: RecyclerView
@@ -58,6 +60,7 @@ class MultiplayerResultFragment : Fragment() {
             rightAnswers = it.getInt(RIGHT_ANSWERS)
             wrongAnswers = it.getInt(WRONG_ANSWERS)
             dropQuestions = it.getInt(DROP_QUESTIONS)
+            amount = it.getInt(AMOUNT)
         }
 
         logD(TAG, "Right Answers - $rightAnswers")
@@ -78,14 +81,29 @@ class MultiplayerResultFragment : Fragment() {
 
         resultRecyclerView.adapter = adapter
         setSettingsItem()
+        view.findViewById<Button>(R.id.back_result_screen_button).setOnClickListener {
+            val playGameLib = PlayGameLib(activity!!)
+            playGameLib.leaveRoom()
+            rightAnswers=0
+            wrongAnswers=0
+            dropQuestions=0
+            amount=0
+            PlayGameLib.GameConstants.mFinishedParticipants.clear()
+            PlayGameLib.GameConstants.mParticipantScore.clear()
+            PlayGameLib.GameConstants.mParticipants.clear()
+            PlayGameLib.GameConstants.modelList.clear()
+            val mainMenuFragment = GameMenuFragment()
+            playGameLib.switchToFragment(mainMenuFragment)
+        }
         return view
     }
 
     private fun setSettingsItem() {
         PlayGameLib.GameConstants.modelList.clear()
-        PlayGameLib.GameConstants.modelList.add(ResultViewModel("Player Name", "Scores"))
+        PlayGameLib.GameConstants.modelList.add(ResultViewModel("Player Name", "Scores", null))
 
-        PlayGameLib.GameConstants.modelList.add(ResultViewModel(PlayGameLib.GameConstants.displayName!!, formatScore(rightAnswers!!)))
+        logD(TAG, "MyImageUri : ${PlayGameLib.GameConstants.imageUri}")
+        PlayGameLib.GameConstants.modelList.add(ResultViewModel(PlayGameLib.GameConstants.displayName!!, formatScore(rightAnswers!!),PlayGameLib.GameConstants.imageUri!!))
 
         for (p in PlayGameLib.GameConstants.mParticipants) {
             if (PlayGameLib.GameConstants.mRoomId != null) {
@@ -138,16 +156,17 @@ class MultiplayerResultFragment : Fragment() {
 
                 if (PlayGameLib.GameConstants.mParticipants.size == PlayGameLib.GameConstants.mFinishedParticipants.size) {
 
-                    PlayGameLib.GameConstants.modelList.add(ResultViewModel(p.displayName, formatScore(score!!)))
+                    PlayGameLib.GameConstants.modelList.add(ResultViewModel(p.displayName, formatScore(score!!), p.iconImageUri))
 
-
+                    logD(TAG, "Player Image Uri : ${p.iconImageUri}")
                     // dismiss progress bar
                     Log.d(TAG, "All players finish the game")
+
                     PlayGameLib.GameConstants.modelList.sortByDescending {
                         it.rightAnswers
                     }
-                    setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
 
+                    setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
                 } else {
                     // show progress bar
                     Log.d(TAG, "Please wait for other participants to finish the game")
@@ -157,6 +176,10 @@ class MultiplayerResultFragment : Fragment() {
             }
         }
     }
+
+
+
+
 
 
     // formats a score as a three-digit number
@@ -237,12 +260,13 @@ class MultiplayerResultFragment : Fragment() {
          */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(param1: String, param2: String, param3: String) =
+        fun newInstance(param1: String, param2: String, param3: String, param4: String) =
                 MultiplayerResultFragment().apply {
                     arguments = Bundle().apply {
                         putString(RIGHT_ANSWERS, param1)
                         putString(WRONG_ANSWERS, param2)
                         putString(DROP_QUESTIONS, param3)
+                        putString(AMOUNT, param4)
                     }
                 }
 

@@ -3,10 +3,12 @@ package com.example.mayank.googleplaygame
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.View
 import android.view.WindowManager
 import com.example.mayank.googleplaygame.Constants.logD
 import com.example.mayank.googleplaygame.PlayGameLib.GameConstants.mFinishedParticipants
@@ -27,6 +29,7 @@ import com.google.android.gms.games.multiplayer.Multiplayer
 import com.google.android.gms.games.multiplayer.Participant
 import com.google.android.gms.games.multiplayer.realtime.*
 import com.google.android.gms.tasks.OnFailureListener
+import kotlinx.android.synthetic.main.activity_multi_player.*
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.HashSet
@@ -65,6 +68,7 @@ class PlayGameLib(private val activity : Activity) {
         var mPlayerId: String? = null
         var mInvitationClient : InvitationsClient ? = null
         lateinit var modelList: MutableList<ResultViewModel>
+        var imageUri : Uri?= null
 }
 
     private val TAG = PlayGameLib::class.java.simpleName
@@ -77,6 +81,8 @@ class PlayGameLib(private val activity : Activity) {
         GameConstants.mPlayerId = getPlayerId()
         GameConstants.mMyId = getMyId()
         GameConstants.modelList = mutableListOf<ResultViewModel>()
+        GameConstants.mInvitationClient = Games.getInvitationsClient(activity, getSignInAccount()!!)
+
 //        GameConstants.mInvitationClient = getInvitationClient()
 
 
@@ -102,6 +108,11 @@ class PlayGameLib(private val activity : Activity) {
     fun getDisplayName(): String?{
         GameConstants.mPlayerClient?.currentPlayer?.addOnSuccessListener { player -> GameConstants.displayName = player.displayName }
         return GameConstants.displayName
+    }
+
+    fun getImageUri(): Uri? {
+        GameConstants.mPlayerClient?.currentPlayer?.addOnSuccessListener { player -> GameConstants.imageUri = player.iconImageUri }
+        return GameConstants.imageUri
     }
 
     fun getRoomId(): String? {
@@ -130,6 +141,7 @@ class PlayGameLib(private val activity : Activity) {
 
 
     fun invitePlayers(){
+        activity.progressBar.visibility = View.VISIBLE
         logD(TAG, "Multiplayer clicked")
         GameConstants.mRealTimeMultiplayerClient?.getSelectOpponentsIntent(1,7)?.addOnSuccessListener { intent ->
             activity.startActivityForResult(intent, GameConstants.RC_SELECT_PLAYERS)
@@ -138,6 +150,7 @@ class PlayGameLib(private val activity : Activity) {
     }
 
     fun startQuickGame() {
+        activity.progressBar.visibility = View.VISIBLE
         logD(TAG, "Start Quick Game")
         // quick-start a game with 1 randomly selected opponent
         val MIN_OPPONENTS = 1
@@ -194,8 +207,6 @@ class PlayGameLib(private val activity : Activity) {
                 return
             }
             updateRoom(room)
-            val gameDetailFragment = GameDetailFragment()
-            switchToFragment(gameDetailFragment)
         }
 
         override fun onJoinedRoom(statusCode: Int, room: Room?) {
@@ -378,6 +389,11 @@ class PlayGameLib(private val activity : Activity) {
             Log.d(TAG, "Room ID: ${GameConstants.mRoomId}")
             Log.d(TAG, "My ID ${GameConstants.mMyId}")
             Log.d(TAG, "<< CONNECTED TO ROOM>>")
+            val gameDetailFragment = GameDetailFragment()
+            switchToFragment(gameDetailFragment)
+            if (activity.progressBar!=null){
+                activity.progressBar.visibility = View.GONE
+            }
             for (p in GameConstants.mParticipants){
                 logD(TAG, "Participants Display Name "+p.displayName)
             }
@@ -500,6 +516,7 @@ class PlayGameLib(private val activity : Activity) {
         }
 
         override fun onInvitationReceived(invitation: Invitation) {
+            logD(TAG, "On invitation received called...")
             val builder = RoomConfig.builder(mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
             GameConstants.mRoomConfig = builder.build()
             Games.getRealTimeMultiplayerClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
@@ -573,8 +590,13 @@ class PlayGameLib(private val activity : Activity) {
     // Switch UI to the given fragment
     fun switchToFragment(newFrag: Fragment) {
         val manager = (activity as AppCompatActivity).supportFragmentManager
-        manager.beginTransaction().replace(R.id.fragment_container, newFrag)
-                .commit()
+        if (activity.isFinishing){
+            manager.beginTransaction().replace(R.id.fragment_container, newFrag)
+                    .commit()
+        }else{
+            manager.beginTransaction().replace(R.id.fragment_container, newFrag)
+                    .commit()
+        }
     }
 
     private var mScore = 10

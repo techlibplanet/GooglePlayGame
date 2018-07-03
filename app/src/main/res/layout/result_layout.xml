@@ -2,31 +2,44 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
-    <LinearLayout
+    <android.support.v7.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_margin="16dp">
-
-        <TextView
-            android:gravity="center"
+        app:cardCornerRadius="15dp"
+        android:outlineSpotShadowColor="@color/colorAccent"
+        android:outlineAmbientShadowColor="@color/colorPrimary">
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/text_view_player_name"
-            android:text="Player Name"
-            android:layout_weight="1"/>
+            android:orientation="horizontal"
+            android:layout_margin="16dp">
 
-        <TextView
-            android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/text_view_right_answers"
-            android:text="Right Answers"
-            android:layout_weight="1"/>
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:id="@+id/player_display_image"/>
+            <TextView
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/text_view_player_name"
+                android:text="Player Name"
+                android:layout_weight="1"/>
 
-        <!--<TextView-->
+            <TextView
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/text_view_right_answers"
+                android:text="Right Answers"
+                android:layout_weight="1"/>
+
+            <!--<TextView-->
             <!--android:gravity="center"-->
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="wrap_content"-->
@@ -34,13 +47,16 @@
             <!--android:text="Wrong Answers"-->
             <!--android:layout_weight="1"/>-->
 
-        <!--<TextView-->
+            <!--<TextView-->
             <!--android:gravity="center"-->
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="wrap_content"-->
             <!--android:id="@+id/text_view_drop_questions"-->
             <!--android:text="Drop Questions"-->
             <!--android:layout_weight="1"/>-->
-    </LinearLayout>
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
+
+
 
 </LinearLayout>
