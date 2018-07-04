@@ -21,7 +21,7 @@ class DashboardActivity : AppCompatActivity(), View.OnClickListener {
     private val RC_ACHIEVEMENT_UI = 9003
     private val RC_LEADERBOARD_UI = 9004
 
-    private val CLICKABLES = intArrayOf(R.id.sign_out_button, R.id.achievements_button, R.id.leaderboards_button, R.id.play_button)
+    private val CLICKABLES = intArrayOf(R.id.sign_out_button, R.id.achievements_button, R.id.leaderboards_button, R.id.play_button, R.id.wallet_button)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +58,11 @@ class DashboardActivity : AppCompatActivity(), View.OnClickListener {
                 startActivity(intent)
 //                finish()
             }
+
+            R.id.wallet_button ->{
+
+            }
+
         }
 
     }

@@ -23,6 +23,8 @@ import com.example.mayank.googleplaygame.R
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewAdapter
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewModel
 import com.google.android.gms.games.multiplayer.Participant
+import java.util.*
+import kotlin.math.log
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -100,8 +102,6 @@ class MultiplayerResultFragment : Fragment() {
 
     private fun setSettingsItem() {
         PlayGameLib.GameConstants.modelList.clear()
-        PlayGameLib.GameConstants.modelList.add(ResultViewModel("Player Name", "Scores", null))
-
         logD(TAG, "MyImageUri : ${PlayGameLib.GameConstants.imageUri}")
         PlayGameLib.GameConstants.modelList.add(ResultViewModel(PlayGameLib.GameConstants.displayName!!, formatScore(rightAnswers!!),PlayGameLib.GameConstants.imageUri!!))
 
@@ -166,6 +166,27 @@ class MultiplayerResultFragment : Fragment() {
                         it.rightAnswers
                     }
 
+
+
+
+                    val result = Collections.min(PlayGameLib.GameConstants.modelList, compResult())
+                    logD(TAG, "Result max value is = Player Name ${result.playerName}, Player score - ${result.rightAnswers}")
+                    if (result.playerName == PlayGameLib.GameConstants.displayName){
+//                        Toast.makeText(activity, "Congrats! You Win!", Toast.LENGTH_SHORT).show()
+                        if (PlayGameLib.GameConstants.modelList[1].rightAnswers == result.rightAnswers){
+                            Toast.makeText(activity, "Its a Tie between ${result.playerName} and ${PlayGameLib.GameConstants.modelList[1].playerName}!", Toast.LENGTH_SHORT).show()
+                        }else{
+                            Toast.makeText(activity, "Congrats! You Win!", Toast.LENGTH_SHORT).show()
+                        }
+
+                    }else{
+                        Toast.makeText(activity, "Sorry! You Loose!\n${result.playerName} Wins!", Toast.LENGTH_SHORT).show()
+                    }
+
+                    if (PlayGameLib.GameConstants.modelList[0].playerName != "Player Name"){
+                        PlayGameLib.GameConstants.modelList.add(0,ResultViewModel("Player Name", "Scores", null))
+                    }
+
                     setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
                 } else {
                     // show progress bar
@@ -177,9 +198,17 @@ class MultiplayerResultFragment : Fragment() {
         }
     }
 
+    private fun winAmount() {
 
+    }
 
-
+    inner class compResult : Comparator<ResultViewModel> {
+        override fun compare(a: ResultViewModel, b: ResultViewModel): Int {
+            if (a.rightAnswers > b.rightAnswers)
+                return -1 // highest value first
+            return if (a.rightAnswers === b.rightAnswers) 0 else 1
+        }
+    }
 
 
     // formats a score as a three-digit number

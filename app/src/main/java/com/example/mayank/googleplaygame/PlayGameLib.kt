@@ -82,6 +82,7 @@ class PlayGameLib(private val activity : Activity) {
         GameConstants.mMyId = getMyId()
         GameConstants.modelList = mutableListOf<ResultViewModel>()
         GameConstants.mInvitationClient = Games.getInvitationsClient(activity, getSignInAccount()!!)
+        GameConstants.imageUri = getImageUri()
 
 //        GameConstants.mInvitationClient = getInvitationClient()
 
