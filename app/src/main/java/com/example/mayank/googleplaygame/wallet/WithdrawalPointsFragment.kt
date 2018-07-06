@@ -122,7 +122,7 @@ class WithdrawalPointsFragment : Fragment(), View.OnClickListener {
                     val walletFragment = WalletFragment()
                     playGameLib.switchToFragment(walletFragment)
                     AlertDialog.Builder(activity!!).setTitle("Withdrawal Points")
-                            .setMessage("\n\nWithdrawal points successfully!\n Balance : ${responseBody?.balance}")
+                            .setMessage("\n\nWithdrawal points processed.\n Balance : ${responseBody?.balance}")
                             .setNeutralButton("Ok", DialogInterface.OnClickListener { dialog, which ->
                                 dialog.dismiss()
                             }).show()
