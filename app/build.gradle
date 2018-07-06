@@ -13,6 +13,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -46,4 +47,9 @@ dependencies {
 
     // Lottie Lib
     implementation 'com.airbnb.android:lottie:2.5.4'
+
+    // PayUMoney
+    implementation('com.payumoney.sdkui:plug-n-play:1.4.0') {
+        exclude module: 'support-v4'
+    }
 }

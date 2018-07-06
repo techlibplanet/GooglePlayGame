@@ -11,6 +11,7 @@ import com.example.mayank.googleplaygame.PlayGameApplication
 import com.example.mayank.googleplaygame.R
 import com.example.mayank.googleplaygame.multiplay.MultiPlayerActivity
 import com.example.mayank.googleplaygame.play.PlayActivity
+import com.example.mayank.googleplaygame.wallet.WalletActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.games.Games
@@ -60,7 +61,8 @@ class DashboardActivity : AppCompatActivity(), View.OnClickListener {
             }
 
             R.id.wallet_button ->{
-
+                val wallet = Intent(this, WalletActivity::class.java)
+                startActivity(wallet)
             }
 
         }

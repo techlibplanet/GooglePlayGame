@@ -6,11 +6,13 @@
     android:orientation="vertical">
 
     <android.support.v7.widget.CardView
+        app:cardCornerRadius="@dimen/dimen_16dp"
+        android:layout_margin="8dp"
+        android:padding="8dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="15dp"
-        android:outlineSpotShadowColor="@color/colorAccent"
-        android:outlineAmbientShadowColor="@color/colorPrimary">
+        app:cardElevation="@dimen/dimen_16dp"
+        android:outlineSpotShadowColor="@color/colorAccent">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
