@@ -15,16 +15,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.Toast
 import com.example.mayank.googleplaygame.Constants.logD
 import com.example.mayank.googleplaygame.PlayGameLib
 
 import com.example.mayank.googleplaygame.R
+import com.example.mayank.googleplaygame.helpers.AlertDialog
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewAdapter
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewModel
+import com.example.mayank.googleplaygame.network.wallet.Itransaction
+import com.example.mayank.googleplaygame.network.wallet.Transactions
+import com.example.mayank.myplaygame.network.ApiClient
 import com.google.android.gms.games.multiplayer.Participant
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.*
-import kotlin.math.log
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -32,6 +37,7 @@ private const val RIGHT_ANSWERS = "RightAnswers"
 private const val WRONG_ANSWERS = "WrongAnswers"
 private const val DROP_QUESTIONS = "DropQuestions"
 private const val AMOUNT = "Amount"
+
 
 /**
  * A simple [Fragment] subclass.
@@ -49,7 +55,7 @@ class MultiplayerResultFragment : Fragment() {
     private var rightAnswers: Int? = 0
     private var wrongAnswers: Int? = 0
     private var dropQuestions: Int? = 0
-    private var amount : Int? = 0
+    private var amount : Float? = 0F
     private var listener: OnFragmentInteractionListener? = null
 
     private lateinit var resultRecyclerView: RecyclerView
@@ -62,7 +68,7 @@ class MultiplayerResultFragment : Fragment() {
             rightAnswers = it.getInt(RIGHT_ANSWERS)
             wrongAnswers = it.getInt(WRONG_ANSWERS)
             dropQuestions = it.getInt(DROP_QUESTIONS)
-            amount = it.getInt(AMOUNT)
+            amount = it.getFloat(AMOUNT)
         }
 
         logD(TAG, "Right Answers - $rightAnswers")
@@ -89,16 +95,15 @@ class MultiplayerResultFragment : Fragment() {
             rightAnswers=0
             wrongAnswers=0
             dropQuestions=0
-            amount=0
-            PlayGameLib.GameConstants.mFinishedParticipants.clear()
-            PlayGameLib.GameConstants.mParticipantScore.clear()
-            PlayGameLib.GameConstants.mParticipants.clear()
-            PlayGameLib.GameConstants.modelList.clear()
+            amount=0F
+            playGameLib.clearData()
             val mainMenuFragment = GameMenuFragment()
             playGameLib.switchToFragment(mainMenuFragment)
         }
         return view
     }
+
+
 
     private fun setSettingsItem() {
         PlayGameLib.GameConstants.modelList.clear()
@@ -174,20 +179,28 @@ class MultiplayerResultFragment : Fragment() {
                     if (result.playerName == PlayGameLib.GameConstants.displayName){
 //                        Toast.makeText(activity, "Congrats! You Win!", Toast.LENGTH_SHORT).show()
                         if (PlayGameLib.GameConstants.modelList[1].rightAnswers == result.rightAnswers){
-                            Toast.makeText(activity, "Its a Tie between ${result.playerName} and ${PlayGameLib.GameConstants.modelList[1].playerName}!", Toast.LENGTH_SHORT).show()
+                            com.example.mayank.googleplaygame.helpers.AlertDialog.alertDialog(activity!!, "Result", "Tie between ${result.playerName} and ${PlayGameLib.GameConstants.modelList[1].playerName}!")
                         }else{
-                            Toast.makeText(activity, "Congrats! You Win!", Toast.LENGTH_SHORT).show()
+
+                            val totalAmount = (amount?.times(PlayGameLib.GameConstants.mFinishedParticipants.size))?.times(80)?.div(100)
+                            logD(TAG, "Total amount = $totalAmount")
+                            val message = "Congrats! You Win!\nAmount Bid - $amount\nAmount Win - $totalAmount"
+                            if (!PlayGameLib.GameConstants.balanceAdded){
+                                PlayGameLib.GameConstants.balanceAdded = true
+                                updateBalance(PlayGameLib.GameConstants.displayName!!, totalAmount, Calendar.getInstance().time.toString(), message)
+                            }
                         }
 
                     }else{
-                        Toast.makeText(activity, "Sorry! You Loose!\n${result.playerName} Wins!", Toast.LENGTH_SHORT).show()
+                        logD(TAG, "Subtract method will call")
+                        val message = "Sorry! You Loose!\nAmount Bid - $amount\nAmount Loose - $amount"
+                        if (!PlayGameLib.GameConstants.balanceAdded){
+                            PlayGameLib.GameConstants.balanceAdded = true
+                            subtractBalance(PlayGameLib.GameConstants.displayName!!, amount, Calendar.getInstance().time.toString(), message)
+                        }
                     }
 
-                    if (PlayGameLib.GameConstants.modelList[0].playerName != "Player Name"){
-                        PlayGameLib.GameConstants.modelList.add(0,ResultViewModel("Player Name", "Scores", null))
-                    }
 
-                    setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
                 } else {
                     // show progress bar
                     Log.d(TAG, "Please wait for other participants to finish the game")
@@ -196,6 +209,54 @@ class MultiplayerResultFragment : Fragment() {
 
             }
         }
+    }
+
+    private fun subtractBalance(playerName: String, amount: Float?, timeStamp: String, message : String) {
+        val apiClient = ApiClient()
+        var retrofit = apiClient.getService<Itransaction>()
+        retrofit.subtractResultBalance(playerName, amount!!, timeStamp).enqueue(object : Callback<Transactions>{
+            override fun onFailure(call: Call<Transactions>?, t: Throwable?) {
+                AlertDialog.alertDialog(activity!!, "Error", "Error : $t")
+            }
+
+            override fun onResponse(call: Call<Transactions>?, response: Response<Transactions>?) {
+                if (response?.isSuccessful!!){
+                    val balance = response.body()?.balance
+                    if (PlayGameLib.GameConstants.modelList[0].playerName != "Player Name"){
+                        PlayGameLib.GameConstants.modelList.add(0,ResultViewModel("Player Name", "Scores", null))
+                    }
+                    setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
+                    AlertDialog.alertDialog(activity!!, "Summary", "$message\nBalance : $balance")
+                }else{
+                    AlertDialog.alertDialog(activity!!, "Summary", "$message\nError : ${response.body()?.error}")
+                }
+            }
+
+        })
+    }
+
+    private fun updateBalance(displayName: String, totalAmount: Float?, timeStamp: String, message : String) {
+        val apiClient = ApiClient()
+        var retrofit = apiClient.getService<Itransaction>()
+        retrofit.addResultBalance(displayName, totalAmount!!, timeStamp).enqueue(object : Callback<Transactions>{
+            override fun onFailure(call: Call<Transactions>?, t: Throwable?) {
+                AlertDialog.alertDialog(activity!!, "Error", "Error : $t")
+            }
+
+            override fun onResponse(call: Call<Transactions>?, response: Response<Transactions>?) {
+                if (response?.isSuccessful!!){
+                    val balance = response.body()?.balance
+                    logD(TAG, "Message - $message Balance - $balance")
+                    if (PlayGameLib.GameConstants.modelList[0].playerName != "Player Name"){
+                        PlayGameLib.GameConstants.modelList.add(0,ResultViewModel("Player Name", "Scores", null))
+                    }
+                    AlertDialog.alertDialog(activity!!, "Summary", "$message\nBalance : $balance")
+                    setRecyclerViewAdapter(PlayGameLib.GameConstants.modelList)
+                }
+            }
+
+        })
+
     }
 
     private fun winAmount() {

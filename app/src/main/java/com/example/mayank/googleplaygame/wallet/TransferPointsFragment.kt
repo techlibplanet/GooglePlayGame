@@ -81,7 +81,7 @@ class TransferPointsFragment : Fragment(), View.OnClickListener {
 
         val apiClient = ApiClient()
         var retrofit = apiClient.getService<Itransaction>()
-        retrofit.transferPoints("$firstName", "$lastName", "${PlayGameLib.GameConstants.displayName}", "$mobileNumber", "$contact", "", "$email","Transfer Points",amount, "", "",
+        retrofit.transferPoints("$firstName", "$lastName", "${PlayGameLib.GameConstants.displayName}", "$mobileNumber", "$contact", "", "$email","Transfer Points","$amount", "", "",
                 "${System.currentTimeMillis()}", "${System.currentTimeMillis()}", "-", "-", "Debited","success").enqueue(object : Callback<Transactions> {
             override fun onFailure(call: Call<Transactions>?, t: Throwable?) {
                 Log.d(TAG, "Error - $t")

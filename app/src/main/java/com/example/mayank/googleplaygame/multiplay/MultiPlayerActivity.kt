@@ -9,6 +9,7 @@ import android.widget.ProgressBar
 import com.example.mayank.googleplaygame.Constants.logD
 import com.example.mayank.googleplaygame.PlayGameLib
 import com.example.mayank.googleplaygame.R
+import com.example.mayank.googleplaygame.wallet.AddPointsFragment
 import com.google.android.gms.games.Games
 import com.google.android.gms.games.InvitationsClient
 import com.google.android.gms.games.multiplayer.InvitationCallback
@@ -17,7 +18,8 @@ class MultiPlayerActivity : AppCompatActivity(),
         GameDetailFragment.OnFragmentInteractionListener,
         GameMenuFragment.OnFragmentInteractionListener,
         QuizFragment.OnFragmentInteractionListener,
-        MultiplayerResultFragment.OnFragmentInteractionListener{
+        MultiplayerResultFragment.OnFragmentInteractionListener,
+        AddPointsFragment.OnFragmentInteractionListener{
 
     private val TAG = MultiPlayerActivity::class.java.simpleName
     private var playGameLib : PlayGameLib? = null

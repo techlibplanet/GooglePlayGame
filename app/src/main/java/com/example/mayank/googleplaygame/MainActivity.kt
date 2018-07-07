@@ -123,14 +123,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 Log.d("Display Name", player.displayName)
                 PlayGameApplication.sharedPrefs?.setStringPreference(this, PLAYER_ID, mPlayerId!!)
                 PlayGameApplication.sharedPrefs?.setStringPreference(this, DISPLAY_NAME, player.displayName)
-                val intent = Intent(this@MainActivity, DashboardActivity::class.java)
+                //val intent = Intent(this@MainActivity, DashboardActivity::class.java)
                 val nameArray = player.name.split(" ")
                 PlayGameApplication.sharedPrefs?.setStringPreference(this, FIRST_NAME, nameArray[0])
                 PlayGameApplication.sharedPrefs?.setStringPreference(this, LAST_NAME, nameArray[1])
-                //logD(TAG, "First Name : ${nameArray[0]} Last Name = ${nameArray[1]}")
-                intent.putExtra("DisplayName", player.displayName)
-                intent.putExtra("PlayerName", player.name)
-                startActivity(intent)
+                //startActivity(intent)
+                
                 finish()
 
             }

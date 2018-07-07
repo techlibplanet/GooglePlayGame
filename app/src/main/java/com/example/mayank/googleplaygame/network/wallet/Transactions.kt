@@ -58,5 +58,8 @@ class Transactions {
     @SerializedName("balance")
     var balance: String? = null
 
+    @SerializedName("error")
+    var error: String? = null
+
 
 }

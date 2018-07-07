@@ -1,24 +1,31 @@
 package com.example.mayank.googleplaygame.multiplay
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.support.v4.app.Fragment
+import android.support.v7.app.AlertDialog
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import com.example.mayank.googleplaygame.Constants
 import com.example.mayank.googleplaygame.Constants.logD
+import com.example.mayank.googleplaygame.PlayGameApplication
 import com.example.mayank.googleplaygame.PlayGameLib
 
 import com.example.mayank.googleplaygame.R
+import com.example.mayank.googleplaygame.network.wallet.Itransaction
+import com.example.mayank.googleplaygame.network.wallet.Transactions
+import com.example.mayank.googleplaygame.wallet.AddPointsFragment
+import com.example.mayank.myplaygame.network.ApiClient
 import kotlinx.android.synthetic.main.game_detail_screen.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -43,19 +50,20 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
 
     private val TAG = GameDetailFragment::class.java.simpleName
     private var i = -1
-    private var j:Int = 0
+    private var j: Int = 0
     private var k = -1
-    private var l:Int = 0
-    private var subject = ""
-    private var subCode = ""
-    private var amount = ""
-    private lateinit var amountList:Array<String>
-    private lateinit var subjectList:Array<String>
-    private lateinit var subjectCode:Array<String>
-    private var playGameLib : PlayGameLib? = null
+    private var l: Int = 0
+    private var subject : String?=null
+    private var subCode : String?= null
+    private var amount : String? = null
+    private lateinit var amountList: Array<String>
+    private lateinit var subjectList: Array<String>
+    private lateinit var subjectCode: Array<String>
+    private var playGameLib: PlayGameLib? = null
     private lateinit var textSwitcherCountdown: TextSwitcher
     private var countDownTimer: CountDownTimer? = null
     private lateinit var textViewCount: TextView
+    private var check: Int = -1
 
     private val CLICKABLES = intArrayOf(R.id.imageButtonNextAmount, R.id.imageButtonNextSubject,
             R.id.imageButtonPreviousAmount, R.id.imageButtonPreviousSubject)
@@ -86,7 +94,7 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
             switcherTextView.gravity = Gravity.CENTER
             switcherTextView
         }
-        for (id in CLICKABLES){
+        for (id in CLICKABLES) {
             view.findViewById<ImageButton>(id).setOnClickListener(this)
         }
         view.findViewById<Button>(R.id.leave_room_button).setOnClickListener(this)
@@ -94,33 +102,33 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
     }
 
     override fun onClick(view: View?) {
-        when(view?.id){
-            R.id.imageButtonNextAmount ->{
+        when (view?.id) {
+            R.id.imageButtonNextAmount -> {
                 nextAmount()
 //                playGameLib?.broadcastScore(true)
-                playGameLib?.broadcastMessage('A',0)
-                resetCountdownTimer(10000,1000)
+                playGameLib?.broadcastMessage('A', 0)
+                resetCountdownTimer(10000, 1000)
             }
 
-            R.id.imageButtonPreviousAmount ->{
+            R.id.imageButtonPreviousAmount -> {
                 previousAmount()
-                playGameLib?.broadcastMessage('A',1)
-                resetCountdownTimer(10000,1000)
+                playGameLib?.broadcastMessage('A', 1)
+                resetCountdownTimer(10000, 1000)
 
             }
-            R.id.imageButtonPreviousSubject ->{
+            R.id.imageButtonPreviousSubject -> {
                 previousSubject()
-                playGameLib?.broadcastMessage('S',1)
-                resetCountdownTimer(10000,1000)
+                playGameLib?.broadcastMessage('S', 1)
+                resetCountdownTimer(10000, 1000)
             }
 
-            R.id.imageButtonNextSubject ->{
+            R.id.imageButtonNextSubject -> {
                 nextSubject()
-                resetCountdownTimer(10000,1000)
-                playGameLib?.broadcastMessage('S',0)
+                resetCountdownTimer(10000, 1000)
+                playGameLib?.broadcastMessage('S', 0)
             }
 
-            R.id.leave_room_button ->{
+            R.id.leave_room_button -> {
                 playGameLib?.leaveRoom()
             }
         }
@@ -138,7 +146,7 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                 //                if(millisUntilFinished < 10001)
                 //                    textView.setTextColor(Color.RED);
 
-                textViewCount.text = "Time left : 0" + millisUntilFinished / 1000
+                textViewCount.text = "Quiz starts in : 0" + millisUntilFinished / 1000
             }
 
             override fun onFinish() {
@@ -150,24 +158,57 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                 }
                 textViewCount.text = "Countdown Finished !"
                 logD("Alert", "Countdown Finished !")
-                val bundle = Bundle()
-                bundle.putString("Subject", subject)
-                bundle.putString("SubjectCode", subCode)
-                bundle.putString("Amount", amount)
-//                val quizFragment = SinglePlayerQuizFragment()
-//                quizFragment.arguments = bundle
-//                playGameLib?.switchToFragment(quizFragment)
-                val quizFragment = QuizFragment()
-                quizFragment.arguments = bundle
-                playGameLib?.switchToFragment(quizFragment)
-                unRegisterBroadcastReceiver()
-                if (countDownTimer!=null){
-                    countDownTimer?.cancel()
+                if (amount==null){
+                    Toast.makeText(activity, "Select a valid Amount!", Toast.LENGTH_SHORT).show()
+                }else if(subject == null){
+                    Toast.makeText(activity, "Select a valid subject!", Toast.LENGTH_SHORT).show()
+                }else{
+                    checkBalance()
                 }
-
             }
         }
         (countDownTimer as CountDownTimer).start()
+    }
+
+    private fun checkBalance() {
+        val mobileNumber = PlayGameApplication.sharedPrefs?.getStringPreference(activity!!, Constants.MOBILE_NUMBER)
+        if (mobileNumber != null) {
+            val apiClient = ApiClient()
+            var retrofit = apiClient.getService<Itransaction>()
+            retrofit.checkBalance(mobileNumber).enqueue(object : Callback<Transactions> {
+                override fun onFailure(call: Call<Transactions>?, t: Throwable?) {
+                    logD(TAG, "Error - $t")
+
+                }
+
+                override fun onResponse(call: Call<Transactions>?, response: Response<Transactions>?) {
+                    if (response?.isSuccessful!!) {
+                        val balance = response.body()?.balance
+
+                        if (amount!! <= balance!!) {
+                            val bundle = Bundle()
+                            bundle.putString("Subject", subject)
+                            bundle.putString("SubjectCode", subCode)
+                            bundle.putFloat("Amount", amount?.toFloat()!!)
+//                              val quizFragment = SinglePlayerQuizFragment()
+//                              quizFragment.arguments = bundle
+//                               playGameLib?.switchToFragment(quizFragment)
+                            val quizFragment = QuizFragment()
+                            quizFragment.arguments = bundle
+                            playGameLib?.switchToFragment(quizFragment)
+                            unRegisterBroadcastReceiver()
+                            if (countDownTimer != null) {
+                                countDownTimer?.cancel()
+                            }
+                        } else {
+                            com.example.mayank.googleplaygame.helpers.AlertDialog.alertDialog(activity!!, "Warning", "one of the opponent may have insufficient balance amount !.\nSelect lower amount")
+                        }
+                    }
+                }
+            })
+        } else {
+            logD(TAG, "Mobile number is null")
+        }
     }
 
     private fun resetCountdownTimer(max: Long, min: Long) {
@@ -244,52 +285,52 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
                 val value = intent.getIntExtra("value", -1)
                 logD(TAG, "State - $state")
                 logD(TAG, "Value - $value")
-                if (state == 'A'){
-                    if (value == 0){
+                if (state == 'A') {
+                    if (value == 0) {
                         nextAmount()
-                    }else if(value == 1){
+                    } else if (value == 1) {
                         previousAmount()
                     }
-                    resetCountdownTimer(10000,1000)
-                }else if(state == 'S'){
-                    if (value == 0){
+                    resetCountdownTimer(10000, 1000)
+                } else if (state == 'S') {
+                    if (value == 0) {
                         nextSubject()
-                    }else if(value == 1){
+                    } else if (value == 1) {
                         previousSubject()
                     }
-                    resetCountdownTimer(10000,1000)
+                    resetCountdownTimer(10000, 1000)
                 }
             }
         }
     }
 
-    private fun nextAmount(){
-        if (k<20){
+    private fun nextAmount() {
+        if (k < 20) {
             k++
-            l=k
+            l = k
             amount = amountList[k]
             textViewAmount.text = amount
-        }else {
-            k=0
+        } else {
+            k = 0
             amount = amountList[k]
             textViewAmount.text = amount
         }
     }
 
-    private fun previousAmount(){
-        if (l>0){
+    private fun previousAmount() {
+        if (l > 0) {
             l--
-            k=l
+            k = l
             amount = amountList[l]
             textViewAmount.text = amount
-        }else {
+        } else {
             l = 20
             amount = amountList[l]
             textViewAmount.text = amount
         }
     }
 
-    private fun nextSubject(){
+    private fun nextSubject() {
         if (i < 6) {
             i++
             logD(TAG, "value of i : $i")
@@ -305,7 +346,7 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    private fun previousSubject(){
+    private fun previousSubject() {
         if (j > 0) {
             j--
             i = j
@@ -320,7 +361,7 @@ class GameDetailFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    private fun unRegisterBroadcastReceiver(){
+    private fun unRegisterBroadcastReceiver() {
         context?.unregisterReceiver(messageBroadcastReceiver)
     }
 

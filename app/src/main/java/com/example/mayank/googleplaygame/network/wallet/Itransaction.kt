@@ -86,6 +86,30 @@ interface Itransaction {
     fun checkBalance(
             @Field("mobileNumber") mobileNumber: String): Call<Transactions>
 
+    @FormUrlEncoded
+    @POST("payu/addResultBalance.php")
+    fun addResultBalance(
+            @Field("displayName") displayName: String,
+            @Field("amount") amount: Float,
+            @Field("timeStamp") timeStamp: String): Call<Transactions>
+
+
+    @FormUrlEncoded
+    @POST("payu/subtractResultBalance.php")
+    fun subtractResultBalance(
+            @Field("displayName") displayName: String,
+            @Field("amount") amount: Float,
+            @Field("timeStamp") timeStamp: String): Call<Transactions>
+
+    @FormUrlEncoded
+    @POST("payu/subtractResultBalance.php")
+    fun addDetails(
+            @Field("mobileNumber") mobileNumber: String,
+            @Field("email") email: String,
+            @Field("displayName") displayName: String): Call<Transactions>
+
+
+
 
 
 }

@@ -1,21 +1,32 @@
 package com.example.mayank.googleplaygame.multiplay
 
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import com.example.mayank.googleplaygame.Constants
 import com.example.mayank.googleplaygame.Constants.logD
+import com.example.mayank.googleplaygame.PlayGameApplication
 import com.example.mayank.googleplaygame.PlayGameLib
 
 import com.example.mayank.googleplaygame.R
+import com.example.mayank.googleplaygame.network.wallet.Itransaction
+import com.example.mayank.googleplaygame.network.wallet.Transactions
+import com.example.mayank.googleplaygame.wallet.AddPointsFragment
+import com.example.mayank.myplaygame.network.ApiClient
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.games.Games
 import kotlinx.android.synthetic.main.activity_multi_player.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -38,8 +49,10 @@ class GameMenuFragment : Fragment(), View.OnClickListener {
     private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
     private var playGameLib : PlayGameLib? = null
+    private val TAG = GameMenuFragment::class.java.simpleName
 
     private val CLICKABLES = intArrayOf(R.id.quick_game, R.id.multi_play_button, R.id.show_invitation_button)
+    private var check : Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,10 +78,12 @@ class GameMenuFragment : Fragment(), View.OnClickListener {
     override fun onClick(view: View?) {
         when(view?.id){
             R.id.quick_game ->{
-                playGameLib?.startQuickGame()
+                check = 0
+                checkBalance()
             }
             R.id.multi_play_button ->{
-                playGameLib?.invitePlayers()
+                check = 1
+                checkBalance()
             }
             R.id.show_invitation_button ->{
                 showInvitationInbox()
@@ -79,6 +94,44 @@ class GameMenuFragment : Fragment(), View.OnClickListener {
     private fun showInvitationInbox() {
         playGameLib?.showInvitationInbox()
 
+    }
+
+    private fun checkBalance() {
+        val mobileNumber = PlayGameApplication.sharedPrefs?.getStringPreference(activity!!, Constants.MOBILE_NUMBER)
+        if (mobileNumber!=null){
+            val apiClient = ApiClient()
+            var retrofit = apiClient.getService<Itransaction>()
+            retrofit.checkBalance(mobileNumber).enqueue(object : Callback<Transactions> {
+                override fun onFailure(call: Call<Transactions>?, t: Throwable?) {
+                    logD(TAG, "Error - $t")
+
+                }
+
+                override fun onResponse(call: Call<Transactions>?, response: Response<Transactions>?) {
+                    if (response?.isSuccessful!!){
+                        val balance = response.body()?.balance
+                        if(balance?.toFloat()!!>=10){
+                            if (check == 0){
+                                playGameLib?.startQuickGame()
+                            }else {
+                                playGameLib?.invitePlayers()
+                            }
+
+                        }else{
+                            AlertDialog.Builder(activity!!).setTitle("Error").setMessage("\nInsufficient balance to play game.")
+                                    .setPositiveButton("Add Balance", DialogInterface.OnClickListener{ dialogInterface, i ->
+                                        val addPointsFragment = AddPointsFragment()
+                                        playGameLib?.switchToFragment(addPointsFragment)
+                                    }).setNegativeButton("Cancel", DialogInterface.OnClickListener { dialogInterface, i ->
+                                        dialogInterface.dismiss()
+                                    }).show()
+                        }
+                    }
+                }
+            })
+        }else {
+            logD(TAG, "Mobile number is null")
+        }
     }
 
 //    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -19,6 +19,9 @@ import com.example.mayank.googleplaygame.multiplay.GameDetailFragment
 import com.example.mayank.googleplaygame.multiplay.GameMenuFragment
 import com.example.mayank.googleplaygame.multiplay.MultiplayerResultFragment
 import com.example.mayank.googleplaygame.multiplay.resultadapter.ResultViewModel
+import com.example.mayank.googleplaygame.network.wallet.Itransaction
+import com.example.mayank.googleplaygame.network.wallet.Transactions
+import com.example.mayank.myplaygame.network.ApiClient
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
@@ -30,6 +33,9 @@ import com.google.android.gms.games.multiplayer.Participant
 import com.google.android.gms.games.multiplayer.realtime.*
 import com.google.android.gms.tasks.OnFailureListener
 import kotlinx.android.synthetic.main.activity_multi_player.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.HashSet
@@ -69,6 +75,7 @@ class PlayGameLib(private val activity : Activity) {
         var mInvitationClient : InvitationsClient ? = null
         lateinit var modelList: MutableList<ResultViewModel>
         var imageUri : Uri?= null
+        var balanceAdded : Boolean = false
 }
 
     private val TAG = PlayGameLib::class.java.simpleName
@@ -86,6 +93,15 @@ class PlayGameLib(private val activity : Activity) {
 
 //        GameConstants.mInvitationClient = getInvitationClient()
 
+
+    }
+
+    fun clearData(){
+        GameConstants.mFinishedParticipants.clear()
+        GameConstants.mParticipantScore.clear()
+        GameConstants.mParticipants.clear()
+        GameConstants.modelList.clear()
+        GameConstants.balanceAdded = false
 
     }
 
@@ -186,7 +202,7 @@ class PlayGameLib(private val activity : Activity) {
             Log.d(TAG, "onRoomCreated($statusCode, $room)")
             if (statusCode != GamesCallbackStatusCodes.OK) {
                 Log.e(TAG, "*** Error: onRoomCreated, status $statusCode")
-//                showGameError()
+                showGameError()
                 // Get the player Id here
                 GameConstants.mRoom = room
                 return
@@ -245,9 +261,7 @@ class PlayGameLib(private val activity : Activity) {
     }
 
     private fun showGameError() {
-        AlertDialog.Builder(activity)
-                .setMessage(activity.getString(R.string.game_problem))
-                .setNeutralButton(android.R.string.ok, null).create()
+        com.example.mayank.googleplaygame.helpers.AlertDialog.alertDialog(activity, "Error", activity.getString(R.string.game_problem))
     }
 
     private fun updateRoom(room: Room?) {
@@ -407,7 +421,7 @@ class PlayGameLib(private val activity : Activity) {
             GameConstants.mRoomId = null
             GameConstants.mRoomConfig = null
             showGameError()
-
+            clearData()
             val gameMenuFragment = GameMenuFragment()
             switchToFragment(gameMenuFragment)
         }
@@ -708,6 +722,32 @@ class PlayGameLib(private val activity : Activity) {
         }
     }
 
+    private var result : Boolean = false
+    fun checkBalance() {
+        val mobileNumber = PlayGameApplication.sharedPrefs?.getStringPreference(activity, Constants.MOBILE_NUMBER)
+        if (mobileNumber!=null){
+            val apiClient = ApiClient()
+            var retrofit = apiClient.getService<Itransaction>()
+            retrofit.checkBalance(mobileNumber).enqueue(object : Callback<Transactions> {
+                override fun onFailure(call: Call<Transactions>?, t: Throwable?) {
+                    logD(TAG, "Error - $t")
 
+                }
 
+                override fun onResponse(call: Call<Transactions>?, response: Response<Transactions>?) {
+                    if (response?.isSuccessful!!){
+                        val balance = response.body()?.balance
+                        if(balance?.toInt()!!>=10){
+                            logD(TAG, "Balance is greater than 10")
+                        }else{
+                            logD(TAG, "Balance is less than 10")
+                        }
+                    }
+                }
+            })
+        }else {
+            logD(TAG, "Mobile number is null")
+        }
+        logD(TAG, "Result - $result")
+    }
 }

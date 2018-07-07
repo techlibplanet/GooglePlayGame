@@ -46,7 +46,7 @@ private const val SUBJECT = "Subject"
 class QuizFragment : Fragment(), View.OnClickListener {
 
     // TODO: Rename and change types of parameters
-    private var amount: Int? = null
+    private var amount: Float? = null
     private var subjectCode: String? = null
     private var subject: String? = null
     private var listener: OnFragmentInteractionListener? = null
@@ -68,7 +68,7 @@ class QuizFragment : Fragment(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            amount = it.getInt(AMOUNT)
+            amount = it.getFloat(AMOUNT)
             subjectCode = it.getString(SUBJECT_CODE)
             subject = it.getString(SUBJECT)
         }
@@ -199,7 +199,7 @@ class QuizFragment : Fragment(), View.OnClickListener {
         logD(TAG, "Display Name - ${PlayGameLib.GameConstants.displayName}")
         playGameLib?.broadcastResult('R', rightAnswers, wrongAnswers, dropQuestions)
         val bundle = Bundle()
-        bundle.putInt("Amount", amount!!)
+        bundle.putFloat("Amount", amount!!)
         bundle.putInt("RightAnswers", rightAnswers)
         bundle.putInt("WrongAnswers", wrongAnswers)
         bundle.putInt("DropQuestions", dropQuestions)
