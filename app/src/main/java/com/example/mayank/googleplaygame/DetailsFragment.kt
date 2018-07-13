@@ -1,6 +1,7 @@
 package com.example.mayank.googleplaygame
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -10,10 +11,13 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import com.example.mayank.googleplaygame.Constants.logD
+import com.example.mayank.googleplaygame.dashboard.DashboardActivity
 import com.example.mayank.googleplaygame.helpers.AlertDialog
 import com.example.mayank.googleplaygame.network.wallet.Itransaction
 import com.example.mayank.googleplaygame.network.wallet.Transactions
 import com.example.mayank.myplaygame.network.ApiClient
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -86,12 +90,31 @@ class DetailsFragment : Fragment(), View.OnClickListener {
             override fun onResponse(call: Call<Transactions>?, response: Response<Transactions>?) {
                 if (response?.isSuccessful!!){
                     logD(TAG, "Response - $response")
-                    logD(TAG, "Response body - ${response.body()}")
+                    logD(TAG, "Response body - ${response.body()?.result}")
+                    if (response.body()?.result == "success"){
+                        saveDetailToPrefs()
+                    }else if(response.body()?.error == "Mobile number already registered!"){
+                        logD(TAG, "${response.body()?.error}")
+                        //AlertDialog.alertDialog(activity!!, "Warning", "Mobile Number already registered !")
+                        saveDetailToPrefs()
+
+                    }else {
+                        AlertDialog.alertDialog(activity!!, "Error", "${response.body()?.error}")
+                    }
                 }
             }
-
         })
     }
+
+    private fun saveDetailToPrefs(){
+        PlayGameApplication.sharedPrefs?.setStringPreference(activity!!, Constants.EMAIL, email!!)
+        PlayGameApplication.sharedPrefs?.setStringPreference(activity!!, Constants.MOBILE_NUMBER, mobileNumber!!)
+        val intent = Intent(activity!!, DashboardActivity::class.java)
+        startActivity(intent)
+        activity?.finish()
+    }
+
+
 
     // TODO: Rename method, update argument and hook method into UI event
     fun onButtonPressed(uri: Uri) {

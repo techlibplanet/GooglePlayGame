@@ -182,9 +182,10 @@ class MultiplayerResultFragment : Fragment() {
                             com.example.mayank.googleplaygame.helpers.AlertDialog.alertDialog(activity!!, "Result", "Tie between ${result.playerName} and ${PlayGameLib.GameConstants.modelList[1].playerName}!")
                         }else{
 
-                            val totalAmount = (amount?.times(PlayGameLib.GameConstants.mFinishedParticipants.size))?.times(80)?.div(100)
+                            var totalAmount = (amount?.times(PlayGameLib.GameConstants.mFinishedParticipants.size))?.times(80)?.div(100)
+                            totalAmount = totalAmount?.minus(amount!!)
                             logD(TAG, "Total amount = $totalAmount")
-                            val message = "Congrats! You Win!\nAmount Bid - $amount\nAmount Win - $totalAmount"
+                            val message = "Congrats! You Win!\nAmount Bid - $amount\nAmount Win - ${totalAmount}"
                             if (!PlayGameLib.GameConstants.balanceAdded){
                                 PlayGameLib.GameConstants.balanceAdded = true
                                 updateBalance(PlayGameLib.GameConstants.displayName!!, totalAmount, Calendar.getInstance().time.toString(), message)

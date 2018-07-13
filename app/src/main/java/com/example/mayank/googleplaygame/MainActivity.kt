@@ -1,8 +1,10 @@
 package com.example.mayank.googleplaygame
 
 import android.content.Intent
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.View
@@ -26,7 +28,7 @@ import com.example.mayank.googleplaygame.Constants.LAST_NAME
 import com.example.mayank.googleplaygame.quickplay.QuickPlayActivity
 
 
-class MainActivity : AppCompatActivity(), View.OnClickListener {
+class MainActivity : AppCompatActivity(), View.OnClickListener, DetailsFragment.OnFragmentInteractionListener, LoginFragment.OnFragmentInteractionListener {
 
     private val TAG = MainActivity::class.java.simpleName
     private val RC_SIGN_IN = 100
@@ -37,13 +39,22 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     //Client used to interact with the Invitation system.
     private var mInvitationsClient: InvitationsClient? = null
     private var mPlayerId: String? = null
+    private lateinit var playGameLib: PlayGameLib
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        findViewById<SignInButton>(R.id.sign_in_button).setOnClickListener(this)
-        findViewById<Button>(R.id.sign_out_button).setOnClickListener(this)
+//        findViewById<SignInButton>(R.id.sign_in_button).setOnClickListener(this)
+//        findViewById<Button>(R.id.sign_out_button).setOnClickListener(this)
 
+        val loginFragment = LoginFragment()
+        switchToFragment(loginFragment)
+
+
+    }
+
+    private fun switchToFragment(newFrag: Fragment) {
+        supportFragmentManager?.beginTransaction()?.replace(R.id.fragment_container, newFrag)?.commit()
     }
 
 
@@ -128,8 +139,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 PlayGameApplication.sharedPrefs?.setStringPreference(this, FIRST_NAME, nameArray[0])
                 PlayGameApplication.sharedPrefs?.setStringPreference(this, LAST_NAME, nameArray[1])
                 //startActivity(intent)
-                
-                finish()
+                val email = PlayGameApplication.sharedPrefs?.getStringPreference(this,Constants.EMAIL)
+                val mobileNumber = PlayGameApplication.sharedPrefs?.getStringPreference(this, Constants.MOBILE_NUMBER)
+                playGameLib = PlayGameLib(this)
+                if (email==null && mobileNumber == null){
+                    val detailFragment = DetailsFragment()
+                    playGameLib.switchToFragment(detailFragment)
+
+                }else{
+                    val intent = Intent(this, DashboardActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
 
             }
 
@@ -166,6 +187,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         } else {
             logD(TAG, "Already sign out !")
         }
+
+    }
+
+    override fun onFragmentInteraction(uri: Uri) {
 
     }
 

@@ -1,105 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical">
+
+<ScrollView
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <ScrollView
+    android:layout_height="match_parent">
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <LinearLayout
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextSwitcher
+            android:layout_marginTop="10dp"
+            android:background="@drawable/text_view_question_background"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@color/colorBlack"
+            android:id="@+id/textSwitcherCountdown"
+            android:text="Quiz Start in "
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"/>
+
+        <TextView
+            android:layout_marginLeft="5dp"
+            android:background="@drawable/text_view_question_background"
+            android:textSize="18sp"
+            android:id="@+id/text_view_question"
+            android:layout_marginTop="10dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:text="Q. This is a sample Question ?"
+            android:textColor="@color/colorBlack"/>
 
-            <TextSwitcher
-                android:layout_marginTop="10dp"
-                android:background="@drawable/text_view_question_background"
-                android:gravity="center"
-                android:layout_gravity="center_horizontal"
-                android:textColor="@color/colorBlack"
-                android:id="@+id/textSwitcherCountdown"
-                android:text="Quiz Start in "
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"/>
+        <View style="@style/ques_divider"/>
+        <TextView
+            android:layout_marginLeft="15dp"
+            android:background="@drawable/text_view_question_background"
+            android:textSize="16sp"
+            android:id="@+id/text_view_option_a"
+            android:layout_marginTop="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="1. Option A"
+            android:textColor="@color/colorBlack"/>
 
-            <TextView
-                android:layout_marginLeft="5dp"
-                android:background="@drawable/text_view_question_background"
-                android:textSize="18sp"
-                android:id="@+id/text_view_question"
-                android:layout_marginTop="10dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Q. This is a sample Question ?"
-                android:textColor="@color/colorBlack"/>
+        <View style="@style/divider"/>
 
-            <View style="@style/ques_divider"/>
-            <TextView
-                android:layout_marginLeft="15dp"
-                android:background="@drawable/text_view_question_background"
-                android:textSize="16sp"
-                android:id="@+id/text_view_option_a"
-                android:layout_marginTop="5dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="1. Option A"
-                android:textColor="@color/colorBlack"/>
+        <TextView
+            android:layout_marginLeft="15dp"
+            android:background="@drawable/text_view_question_background"
+            android:textSize="16sp"
+            android:id="@+id/text_view_option_b"
+            android:layout_marginTop="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="2. Option B"
+            android:textColor="@color/colorBlack"/>
 
-            <View style="@style/divider"/>
+        <View style="@style/divider"/>
 
-            <TextView
-                android:layout_marginLeft="15dp"
-                android:background="@drawable/text_view_question_background"
-                android:textSize="16sp"
-                android:id="@+id/text_view_option_b"
-                android:layout_marginTop="5dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="2. Option B"
-                android:textColor="@color/colorBlack"/>
+        <TextView
+            android:layout_marginLeft="15dp"
+            android:background="@drawable/text_view_question_background"
+            android:textSize="16sp"
+            android:id="@+id/text_view_option_c"
+            android:layout_marginTop="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="3. Option C"
+            android:textColor="@color/colorBlack"/>
 
-            <View style="@style/divider"/>
+        <View style="@style/divider"/>
 
-            <TextView
-                android:layout_marginLeft="15dp"
-                android:background="@drawable/text_view_question_background"
-                android:textSize="16sp"
-                android:id="@+id/text_view_option_c"
-                android:layout_marginTop="5dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="3. Option C"
-                android:textColor="@color/colorBlack"/>
+        <TextView
+            android:layout_marginLeft="15dp"
+            android:background="@drawable/text_view_question_background"
+            android:textSize="16sp"
+            android:id="@+id/text_view_option_d"
+            android:layout_marginTop="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="4. Option D"
+            android:textColor="@color/colorBlack"/>
 
-            <View style="@style/divider"/>
+        <View style="@style/divider"/>
 
-            <TextView
-                android:layout_marginLeft="15dp"
-                android:background="@drawable/text_view_question_background"
-                android:textSize="16sp"
-                android:id="@+id/text_view_option_d"
-                android:layout_marginTop="5dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="4. Option D"
-                android:textColor="@color/colorBlack"/>
-
-            <View style="@style/divider"/>
-
-            <TextView
-                android:layout_marginLeft="15dp"
-                android:background="@drawable/text_view_question_background"
-                android:textSize="16sp"
-                android:id="@+id/text_view_option_e"
-                android:layout_marginTop="5dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="5. Option E"
-                android:textColor="@color/colorBlack"/>
+        <TextView
+            android:layout_marginLeft="15dp"
+            android:background="@drawable/text_view_question_background"
+            android:textSize="16sp"
+            android:id="@+id/text_view_option_e"
+            android:layout_marginTop="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="5. Option E"
+            android:textColor="@color/colorBlack"/>
 
 
-        </LinearLayout>
-    </ScrollView>
+    </LinearLayout>
+</ScrollView>
 
 </LinearLayout>

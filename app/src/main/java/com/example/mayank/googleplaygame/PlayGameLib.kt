@@ -2,6 +2,7 @@ package com.example.mayank.googleplaygame
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -91,9 +92,17 @@ class PlayGameLib(private val activity : Activity) {
         GameConstants.mInvitationClient = Games.getInvitationsClient(activity, getSignInAccount()!!)
         GameConstants.imageUri = getImageUri()
 
-//        GameConstants.mInvitationClient = getInvitationClient()
+        GameConstants.mInvitationClient= getInvitationClient()
 
 
+    }
+
+    fun registerInvitationCallback(){
+        mInvitationClient?.registerInvitationCallback(mInvitationCallbackHandler)
+    }
+
+    fun unRegisterInvitationCallback(){
+        mInvitationClient?.unregisterInvitationCallback(mInvitationCallbackHandler)
     }
 
     fun clearData(){
@@ -144,9 +153,9 @@ class PlayGameLib(private val activity : Activity) {
     }
 
     fun showInvitationInbox(){
-        Games.getInvitationsClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
-                .invitationInboxIntent
-                .addOnSuccessListener { intent -> activity.startActivityForResult(intent, GameConstants.RC_INVITATION_INBOX) }
+//        Games.getInvitationsClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
+                mInvitationClient?.invitationInboxIntent
+                ?.addOnSuccessListener { intent -> activity.startActivityForResult(intent, GameConstants.RC_INVITATION_INBOX) }
     }
 
     fun getMyId(): String? {
@@ -186,6 +195,8 @@ class PlayGameLib(private val activity : Activity) {
         GameConstants.mRealTimeMultiplayerClient?.create(GameConstants.mRoomConfig!!)
     }
 
+
+
     private fun keepScreenOn() {
         activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -195,7 +206,7 @@ class PlayGameLib(private val activity : Activity) {
         activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
-    private val mRoomUpdateCallback = object : RoomUpdateCallback() {
+    val mRoomUpdateCallback = object : RoomUpdateCallback() {
 
         // Called when room has been created
         override fun onRoomCreated(statusCode: Int, room: Room?) {
@@ -532,11 +543,22 @@ class PlayGameLib(private val activity : Activity) {
 
         override fun onInvitationReceived(invitation: Invitation) {
             logD(TAG, "On invitation received called...")
-            val builder = RoomConfig.builder(mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
-            GameConstants.mRoomConfig = builder.build()
-            Games.getRealTimeMultiplayerClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
-                    .join(GameConstants.mRoomConfig!!)
-            activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            val inviter = invitation.inviter
+            val name = inviter.displayName
+            logD(TAG, "Inviter Name - $name Inviter - $inviter")
+            AlertDialog.Builder(activity).setTitle("Invitation Received").setMessage("${invitation.inviter.displayName} is challenging you to a game!").setPositiveButton("Accept", DialogInterface.OnClickListener { dialogInterface, i ->
+                acceptInviteToRoom(invitation.invitationId)
+                dialogInterface.dismiss()
+
+            }).setNegativeButton("Cancel", DialogInterface.OnClickListener { dialogInterface, i ->
+                dialogInterface.dismiss()
+            }).show()
+
+//            val builder = RoomConfig.builder(mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
+//            GameConstants.mRoomConfig = builder.build()
+//            Games.getRealTimeMultiplayerClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
+//                    .join(GameConstants.mRoomConfig!!)
+//            activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
     }

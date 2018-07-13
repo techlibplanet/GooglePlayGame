@@ -102,7 +102,7 @@ interface Itransaction {
             @Field("timeStamp") timeStamp: String): Call<Transactions>
 
     @FormUrlEncoded
-    @POST("payu/subtractResultBalance.php")
+    @POST("payu/insertDetails.php")
     fun addDetails(
             @Field("mobileNumber") mobileNumber: String,
             @Field("email") email: String,

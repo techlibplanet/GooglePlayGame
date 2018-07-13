@@ -5,28 +5,32 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import com.example.mayank.googleplaygame.Constants
-import com.example.mayank.googleplaygame.MainActivity
-import com.example.mayank.googleplaygame.PlayGameApplication
-import com.example.mayank.googleplaygame.R
+import com.example.mayank.googleplaygame.*
 import com.example.mayank.googleplaygame.multiplay.MultiPlayerActivity
 import com.example.mayank.googleplaygame.play.PlayActivity
 import com.example.mayank.googleplaygame.wallet.WalletActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.games.Games
+import com.google.android.gms.games.InvitationsClient
 
 class DashboardActivity : AppCompatActivity(), View.OnClickListener {
 
     private val TAG = DashboardActivity::class.java.simpleName
     private val RC_ACHIEVEMENT_UI = 9003
     private val RC_LEADERBOARD_UI = 9004
+    private var playGameLib : PlayGameLib? = null
+    private var invitationClient : InvitationsClient? = null
 
     private val CLICKABLES = intArrayOf(R.id.sign_out_button, R.id.achievements_button, R.id.leaderboards_button, R.id.play_button, R.id.wallet_button)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
+        playGameLib = PlayGameLib(this)
+        invitationClient = Games.getInvitationsClient(this, playGameLib?.getSignInAccount()!!)
+
+        PlayGameLib.GameConstants.mInvitationClient?.registerInvitationCallback(playGameLib?.mInvitationCallbackHandler!!)
 
         for (id in CLICKABLES){
             findViewById<Button>(id).setOnClickListener(this)

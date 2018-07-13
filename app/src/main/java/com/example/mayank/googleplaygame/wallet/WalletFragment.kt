@@ -15,6 +15,7 @@ import com.example.mayank.googleplaygame.PlayGameApplication
 import com.example.mayank.googleplaygame.PlayGameLib
 
 import com.example.mayank.googleplaygame.R
+import com.example.mayank.googleplaygame.helpers.AlertDialog
 import com.example.mayank.googleplaygame.network.wallet.Itransaction
 import com.example.mayank.googleplaygame.network.wallet.Transactions
 import com.example.mayank.myplaygame.network.ApiClient
@@ -86,6 +87,9 @@ class WalletFragment : Fragment(), View.OnClickListener {
                     if (response?.isSuccessful!!){
                         val balance = response.body()?.balance
                         balanceTextView.text = "Points : $balance"
+                    }else {
+                        logD(TAG, "${response.body()?.error}")
+                        AlertDialog.alertDialog(activity!!, "Error", "${response.body()?.error}")
                     }
                 }
 

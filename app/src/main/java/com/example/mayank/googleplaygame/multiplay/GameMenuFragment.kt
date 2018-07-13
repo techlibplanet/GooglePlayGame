@@ -116,6 +116,7 @@ class GameMenuFragment : Fragment(), View.OnClickListener {
                             }else {
                                 playGameLib?.invitePlayers()
                             }
+                            check = -1
 
                         }else{
                             AlertDialog.Builder(activity!!).setTitle("Error").setMessage("\nInsufficient balance to play game.")

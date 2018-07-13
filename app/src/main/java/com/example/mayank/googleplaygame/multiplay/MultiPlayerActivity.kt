@@ -1,5 +1,6 @@
 package com.example.mayank.googleplaygame.multiplay
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
@@ -13,6 +14,14 @@ import com.example.mayank.googleplaygame.wallet.AddPointsFragment
 import com.google.android.gms.games.Games
 import com.google.android.gms.games.InvitationsClient
 import com.google.android.gms.games.multiplayer.InvitationCallback
+import android.support.annotation.NonNull
+import android.support.v7.app.AlertDialog
+import android.view.WindowManager
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.games.multiplayer.realtime.RoomConfig
+import com.google.android.gms.games.multiplayer.Invitation
+
+
 
 class MultiPlayerActivity : AppCompatActivity(),
         GameDetailFragment.OnFragmentInteractionListener,
@@ -34,8 +43,11 @@ class MultiPlayerActivity : AppCompatActivity(),
 
         progressBar = findViewById(R.id.progressBar)
 
-        PlayGameLib.GameConstants.mInvitationClient?.registerInvitationCallback(playGameLib?.mInvitationCallbackHandler!!)
+//        PlayGameLib.GameConstants.mInvitationClient?.registerInvitationCallback(playGameLib?.mInvitationCallbackHandler!!)
         invitationClient = Games.getInvitationsClient(this@MultiPlayerActivity, playGameLib?.getSignInAccount()!!)
+//        invitationClient = playGameLib?.getInvitationClient()
+//        invitationClient?.registerInvitationCallback(mInvitationCallbackHandler)
+        PlayGameLib.GameConstants.mInvitationClient?.registerInvitationCallback(playGameLib?.mInvitationCallbackHandler!!)
         val gameMenu = GameMenuFragment()
         switchToFragment(gameMenu)
 //        val gameDetailFragment = GameDetailFragment()
@@ -44,7 +56,8 @@ class MultiPlayerActivity : AppCompatActivity(),
 
     override fun onPause() {
         super.onPause()
-        invitationClient?.unregisterInvitationCallback(playGameLib?.mInvitationCallbackHandler!!)
+//        invitationClient?.unregisterInvitationCallback(mInvitationCallbackHandler)
+        PlayGameLib.GameConstants.mInvitationClient?.unregisterInvitationCallback(playGameLib?.mInvitationCallbackHandler!!)
     }
 
     // Switch UI to the given fragment
@@ -62,5 +75,41 @@ class MultiPlayerActivity : AppCompatActivity(),
     override fun onFragmentInteraction(uri: Uri) {
 
     }
+
+//    private val mInvitationCallbackHandler = object : InvitationCallback() {
+//        override fun onInvitationRemoved(invitationId: String) {
+//            logD(TAG, "Invitation removed - $invitationId")
+//        }
+//
+//        override fun onInvitationReceived(invitation: Invitation) {
+//            logD(TAG, "On invitation received called...")
+//            val builder = RoomConfig.builder(playGameLib?.mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
+//            PlayGameLib.GameConstants.mRoomConfig = builder.build()
+//            Games.getRealTimeMultiplayerClient(this@MultiPlayerActivity, GoogleSignIn.getLastSignedInAccount(applicationContext)!!)
+//                    .join(PlayGameLib.GameConstants.mRoomConfig!!)
+//            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+//        }
+//
+//    }
+
+    private val mInvitationCallbackHandler = object : InvitationCallback() {
+        override fun onInvitationRemoved(invitationId: String) {
+            logD(TAG, "Invitation removed - $invitationId")
+        }
+
+        override fun onInvitationReceived(invitation: Invitation) {
+            logD(TAG, "On invitation received called...")
+            val builder = RoomConfig.builder(playGameLib?.mRoomUpdateCallback).setInvitationIdToAccept(invitation.invitationId)
+            PlayGameLib.GameConstants.mRoomConfig = builder.build()
+            Games.getRealTimeMultiplayerClient(this@MultiPlayerActivity, GoogleSignIn.getLastSignedInAccount(applicationContext)!!)
+                    .join(PlayGameLib.GameConstants.mRoomConfig!!)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+
+        }
+
+    }
+
+
 
 }

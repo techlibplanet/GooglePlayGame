@@ -3,9 +3,9 @@
     <!--<color name="colorPrimary">#3F51B5</color>-->
     <!--<color name="colorPrimaryDark">#303F9F</color>-->
     <!--<color name="colorAccent">#FF4081</color>-->
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#292b3d</color>
-    <color name="colorAccent">#03DAC5</color>
+    <!--<color name="colorPrimary">#6200EE</color>-->
+    <!--<color name="colorPrimaryDark">#292b3d</color>-->
+    <!--<color name="colorAccent">#03DAC5</color>-->
     <color name="grayLight">#FAFAFA</color>
     <color name="white">#FFFFFF</color>
     <color name="colorBlack">#000000</color>
@@ -16,4 +16,13 @@
     <!--<color name="colorPrimary">#1B5E20</color>-->
     <!--<color name="colorPrimaryDark">#43A047</color>-->
     <!--<color name="colorAccent">#ffffff</color>-->
+
+    <color name="colorPrimary">#673AB7</color>
+    <color name="colorPrimaryDark">#512DA8</color>
+    <color name="colorPrimaryLight">#D1C4E9</color>
+    <color name="colorAccent">#7C4DFF</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+    <color name="icons">#FFFFFF</color>
+    <color name="divider">#BDBDBD</color>
 </resources>
